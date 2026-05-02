@@ -14,9 +14,12 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from xml.etree import ElementTree as ET
 import pypdf
+import libsql_experimental as libsql
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-DB_PATH           = "studysearch.db"
+ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
+TURSO_DATABASE_URL = os.getenv("TURSO_DATABASE_URL", "")
+TURSO_AUTH_TOKEN   = os.getenv("TURSO_AUTH_TOKEN", "")
+DB_PATH            = "studysearch.db"
 CHAT_MODEL        = "claude-sonnet-4-20250514"
 CHUNK_SIZE_WORDS  = 80
 MAX_RESULTS       = 8
@@ -70,7 +73,45 @@ AP_CLASSES = [
 
 # ─── DB ───────────────────────────────────────────────────────────────────────
 
+class DictCursor:
+    """Wraps a libsql cursor so fetchone/fetchall return dict-like rows."""
+    def __init__(self, cursor):
+        self._cursor = cursor
+    @property
+    def description(self):
+        return self._cursor.description
+    @property
+    def lastrowid(self):
+        return self._cursor.lastrowid
+    def _to_dict(self, row):
+        if row is None:
+            return None
+        cols = [d[0] for d in self._cursor.description]
+        return dict(zip(cols, row))
+    def fetchone(self):
+        return self._to_dict(self._cursor.fetchone())
+    def fetchall(self):
+        return [self._to_dict(r) for r in self._cursor.fetchall()]
+    def __iter__(self):
+        return (self._to_dict(r) for r in self._cursor)
+
+class TursoConnection:
+    """Wraps a libsql connection to return dict rows like sqlite3.Row."""
+    def __init__(self, conn):
+        self._conn = conn
+    def execute(self, sql, params=()):
+        return DictCursor(self._conn.execute(sql, params))
+    def executescript(self, sql):
+        self._conn.executescript(sql)
+    def commit(self):
+        self._conn.commit()
+    def close(self):
+        self._conn.close()
+
 def get_db():
+    if TURSO_DATABASE_URL:
+        conn = libsql.connect(database=TURSO_DATABASE_URL, auth_token=TURSO_AUTH_TOKEN)
+        return TursoConnection(conn)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
