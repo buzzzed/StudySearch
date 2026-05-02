@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: studysearch
+    runtime: docker
+    plan: free
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
