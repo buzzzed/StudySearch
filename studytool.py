@@ -3,7 +3,7 @@ StudySearch Backend v4
 BM25 retrieval + Claude AI + User Accounts
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Header
+from fastapi import FastAPI, UploadFile, File, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -15,6 +15,12 @@ from contextlib import asynccontextmanager
 from xml.etree import ElementTree as ET
 import pypdf
 import libsql_experimental as libsql
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from sse_starlette.sse import EventSourceResponse
+import asyncio
 
 ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY", "")
 TURSO_DATABASE_URL = os.getenv("TURSO_DATABASE_URL", "")
@@ -25,6 +31,10 @@ CHUNK_SIZE_WORDS  = 80
 MAX_RESULTS       = 8
 K1, B             = 1.5, 0.75
 TOKEN_DAYS        = 30
+
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8000,https://studysearch.onrender.com").split(",")
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 
 # ─── AP CLASSES ──────────────────────────────────────────────────────────────
 
@@ -171,6 +181,35 @@ def init_db():
             user_id TEXT NOT NULL,
             username TEXT NOT NULL,
             body TEXT NOT NULL,
+            created_at REAL NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS user_votes (
+            user_id TEXT NOT NULL,
+            post_id TEXT NOT NULL,
+            created_at REAL NOT NULL,
+            PRIMARY KEY (user_id, post_id)
+        );
+        CREATE TABLE IF NOT EXISTS study_progress (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            session_id TEXT NOT NULL,
+            activity_type TEXT NOT NULL,
+            topic TEXT NOT NULL DEFAULT '',
+            score REAL,
+            total REAL,
+            created_at REAL NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            token TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            created_at REAL NOT NULL,
+            expires_at REAL NOT NULL,
+            used INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS share_links (
+            token TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
             created_at REAL NOT NULL
         );
     """)
@@ -330,6 +369,24 @@ def make_chunks(raw, doc_id, session_id, filename) -> List[dict]:
         })
     return result
 
+# ─── HELPERS FOR CHUNK FETCHING ──────────────────────────────────────────────
+
+def _get_session_chunks(conn, sid: str, topic: str = "") -> List[dict]:
+    """Fetch chunks for a session, optionally filtered by topic via BM25."""
+    rows = conn.execute(
+        "SELECT c.id, c.doc_id, c.slide_num, c.text, c.tokens, d.filename "
+        "FROM chunks c JOIN documents d ON c.doc_id=d.id WHERE c.session_id=?", (sid,)
+    ).fetchall()
+    if not rows:
+        return []
+    chunks = [{"id": r["id"], "doc_id": r["doc_id"], "slide_num": r["slide_num"],
+               "text": r["text"], "tokens": json.loads(r["tokens"]), "doc_name": r["filename"]} for r in rows]
+    if topic and topic.strip():
+        results = search_bm25(topic, chunks, top_k=MAX_RESULTS)
+        if results:
+            return results
+    return chunks[:MAX_RESULTS]
+
 # ─── APP ──────────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
@@ -337,7 +394,10 @@ async def lifespan(app):
     init_db(); yield
 
 app = FastAPI(title="StudySearch API v3", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_methods=["*"], allow_headers=["*"])
 
 # ─── AUTH ENDPOINTS ───────────────────────────────────────────────────────────
 
@@ -351,7 +411,8 @@ class LoginRequest(BaseModel):
     password: str
 
 @app.post("/api/auth/signup")
-def signup(body: SignupRequest):
+@limiter.limit("5/minute")
+def signup(request: Request, body: SignupRequest):
     if len(body.username.strip()) < 2:
         raise HTTPException(400, "Username must be at least 2 characters")
     if len(body.password) < 6:
@@ -376,7 +437,8 @@ def signup(body: SignupRequest):
     return {"token": token, "user_id": uid, "username": body.username.strip(), "session_id": sid}
 
 @app.post("/api/auth/login")
-def login(body: LoginRequest):
+@limiter.limit("5/minute")
+def login(request: Request, body: LoginRequest):
     conn = get_db()
     row  = conn.execute("SELECT * FROM users WHERE email=?", (body.email.lower(),)).fetchone()
     if not row or not verify_password(body.password, row["salt"], row["password_hash"]):
@@ -415,6 +477,49 @@ def get_me(authorization: Optional[str] = Header(None)):
     conn.close()
     return {"user_id": user["id"], "username": user["username"], "email": user["email"],
             "session_id": sess["id"] if sess else None}
+
+# ─── PASSWORD RESET ──────────────────────────────────────────────────────────
+
+class ResetRequestBody(BaseModel):
+    email: str
+
+class ResetBody(BaseModel):
+    token: str
+    new_password: str
+
+@app.post("/api/auth/reset-request")
+def reset_request(body: ResetRequestBody):
+    conn = get_db()
+    user = conn.execute("SELECT id FROM users WHERE email=?", (body.email.lower(),)).fetchone()
+    if not user:
+        conn.close()
+        # Return success even if user not found to prevent email enumeration
+        return {"token": ""}
+    token = secrets.token_urlsafe(32)
+    now = time.time()
+    expires = now + 3600  # 1 hour expiry
+    conn.execute("INSERT INTO password_reset_tokens VALUES (?,?,?,?,?)",
+                 (token, user["id"], now, expires, 0))
+    conn.commit(); conn.close()
+    return {"token": token}
+
+@app.post("/api/auth/reset")
+def reset_password(body: ResetBody):
+    if len(body.new_password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters")
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM password_reset_tokens WHERE token=? AND used=0 AND expires_at > ?",
+        (body.token, time.time())
+    ).fetchone()
+    if not row:
+        conn.close(); raise HTTPException(400, "Invalid or expired reset token")
+    salt = secrets.token_hex(16)
+    pw = hash_password(body.new_password, salt)
+    conn.execute("UPDATE users SET password_hash=?, salt=? WHERE id=?", (pw, salt, row["user_id"]))
+    conn.execute("UPDATE password_reset_tokens SET used=1 WHERE token=?", (body.token,))
+    conn.commit(); conn.close()
+    return {"ok": True}
 
 # ─── SESSIONS ─────────────────────────────────────────────────────────────────
 
@@ -505,6 +610,56 @@ def bm25_search_route(sid: str, body: SearchRequest):
                      "score": r["score"]} for r in results]
     }
 
+# ─── SMART SEARCH (QUERY EXPANSION) ─────────────────────────────────────────
+
+@app.post("/api/sessions/{sid}/smart-search")
+@limiter.limit("15/minute")
+async def smart_search_route(request: Request, sid: str, body: SearchRequest):
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(500, "ANTHROPIC_API_KEY not configured on server")
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT c.id, c.doc_id, c.slide_num, c.text, c.tokens, d.filename "
+        "FROM chunks c JOIN documents d ON c.doc_id=d.id WHERE c.session_id=?", (sid,)
+    ).fetchall()
+    if not rows:
+        conn.close(); raise HTTPException(400, "No documents uploaded yet")
+    conn.close()
+
+    # Use Claude to expand the query
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01",
+                     "content-type": "application/json"},
+            json={"model": CHAT_MODEL, "max_tokens": 150,
+                  "system": "Given the search query, generate 3-5 related search terms or synonyms. Return ONLY a comma-separated list of terms, nothing else.",
+                  "messages": [{"role": "user", "content": body.query}]}
+        )
+
+    expanded_terms = ""
+    try:
+        data = resp.json()
+        if "content" in data and data["content"]:
+            expanded_terms = data["content"][0]["text"]
+    except Exception:
+        pass
+
+    combined_query = body.query
+    if expanded_terms:
+        combined_query = f"{body.query} {expanded_terms.replace(',', ' ')}"
+
+    chunks = [{"id": r["id"], "doc_id": r["doc_id"], "slide_num": r["slide_num"],
+               "text": r["text"], "tokens": json.loads(r["tokens"]), "doc_name": r["filename"]} for r in rows]
+    results = search_bm25(combined_query, chunks)
+    return {
+        "query": body.query,
+        "expanded_terms": expanded_terms,
+        "results": [{"id": r["id"], "doc_name": r["doc_name"], "slide_num": r["slide_num"],
+                     "text": r["text"], "highlighted": highlight(r["text"], body.query),
+                     "score": r["score"]} for r in results]
+    }
+
 # ─── AI EXPLAIN — OPTIONAL ────────────────────────────────────────────────────
 
 class ExplainRequest(BaseModel):
@@ -513,7 +668,8 @@ class ExplainRequest(BaseModel):
     conversation_id: Optional[str] = None
 
 @app.post("/api/sessions/{sid}/explain")
-async def explain_route(sid: str, body: ExplainRequest):
+@limiter.limit("15/minute")
+async def explain_route(request: Request, sid: str, body: ExplainRequest):
     if not ANTHROPIC_API_KEY:
         raise HTTPException(500, "ANTHROPIC_API_KEY not configured on server")
     conn = get_db()
@@ -569,6 +725,264 @@ Rules:
                  (str(uuid.uuid4()), conv_id, "assistant", answer, json.dumps(sources), now + 0.001))
     conn.commit(); conn.close()
     return {"conversation_id": conv_id, "answer": answer, "sources": sources}
+
+# ─── SSE STREAMING AI EXPLAIN ────────────────────────────────────────────────
+
+@app.post("/api/sessions/{sid}/explain-stream")
+@limiter.limit("15/minute")
+async def explain_stream_route(request: Request, sid: str, body: ExplainRequest):
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(500, "ANTHROPIC_API_KEY not configured on server")
+    conn = get_db()
+    ph   = ','.join('?' * len(body.chunk_ids))
+    rows = conn.execute(
+        f"SELECT c.id, c.slide_num, c.text, d.filename FROM chunks c "
+        f"JOIN documents d ON c.doc_id=d.id WHERE c.id IN ({ph}) AND c.session_id=?",
+        (*body.chunk_ids, sid)
+    ).fetchall()
+    if not rows:
+        conn.close(); raise HTTPException(404, "Chunks not found")
+
+    conv_id = body.conversation_id
+    if not conv_id:
+        conv_id = str(uuid.uuid4())
+        conn.execute("INSERT INTO conversations VALUES (?,?,?,?)",
+                     (conv_id, sid, time.time(), body.query[:60]))
+        conn.commit()
+
+    history = [{"role": r["role"], "content": r["content"]} for r in conn.execute(
+        "SELECT role, content FROM messages WHERE conversation_id=? ORDER BY created_at", (conv_id,)
+    ).fetchall()]
+
+    context = "\n\n".join(f"[{r['filename']} — Slide {r['slide_num']}]\n{r['text']}" for r in rows)
+    sources = [{"doc": r["filename"], "slide": r["slide_num"]} for r in rows]
+
+    messages = history + [{"role": "user",
+        "content": f"Notes from slides:\n\n{context}\n\n---\nExplain: {body.query}"}]
+
+    conn.close()
+
+    async def event_generator():
+        full_text = ""
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async with client.stream(
+                "POST",
+                "https://api.anthropic.com/v1/messages",
+                headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01",
+                         "content-type": "application/json"},
+                json={"model": CHAT_MODEL, "max_tokens": 1024, "stream": True,
+                      "system": """You are StudySearch, a smart study assistant. Your job is to directly answer the student's question using ONLY the information in the provided slide notes.
+
+Rules:
+- Lead with a clear, direct answer to the question in the very first sentence — like a Google AI overview.
+- Then give 2-4 sentences of the most important supporting detail.
+- IGNORE any slide content that is not relevant to the question — do not mention it.
+- Write in plain, clear prose. No bullet points, no headers, no lists, no markdown.
+- If the notes don't contain enough information to answer fully, say so briefly at the end.
+- For follow-up questions, use the conversation history for context.""",
+                      "messages": messages}
+            ) as resp:
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data_str = line[6:]
+                    if data_str.strip() == "[DONE]":
+                        break
+                    try:
+                        event = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        continue
+                    event_type = event.get("type", "")
+                    if event_type == "content_block_delta":
+                        delta = event.get("delta", {})
+                        if delta.get("type") == "text_delta":
+                            token = delta.get("text", "")
+                            full_text += token
+                            yield {"data": json.dumps({"token": token})}
+                    elif event_type == "message_stop":
+                        break
+
+        # Save to DB
+        db = get_db()
+        now = time.time()
+        db.execute("INSERT INTO messages VALUES (?,?,?,?,?,?)",
+                   (str(uuid.uuid4()), conv_id, "user", body.query, "[]", now))
+        db.execute("INSERT INTO messages VALUES (?,?,?,?,?,?)",
+                   (str(uuid.uuid4()), conv_id, "assistant", full_text, json.dumps(sources), now + 0.001))
+        db.commit(); db.close()
+
+        yield {"data": json.dumps({"done": True, "answer": full_text, "conversation_id": conv_id, "sources": sources})}
+
+    return EventSourceResponse(event_generator())
+
+# ─── FLASHCARD GENERATION ────────────────────────────────────────────────────
+
+class FlashcardRequest(BaseModel):
+    topic: str = ""
+    count: int = 10
+
+@app.post("/api/sessions/{sid}/flashcards")
+@limiter.limit("15/minute")
+async def flashcard_route(request: Request, sid: str, body: FlashcardRequest):
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(500, "ANTHROPIC_API_KEY not configured on server")
+    conn = get_db()
+    chunks = _get_session_chunks(conn, sid, body.topic)
+    conn.close()
+    if not chunks:
+        raise HTTPException(400, "No documents uploaded yet")
+
+    context = "\n\n".join(c["text"] for c in chunks)
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01",
+                     "content-type": "application/json"},
+            json={"model": CHAT_MODEL, "max_tokens": 2048,
+                  "system": f"Generate exactly {body.count} flashcards from the provided study material. Return ONLY valid JSON array: [{{\"front\": \"question\", \"back\": \"answer\"}}]. No markdown, no explanation.",
+                  "messages": [{"role": "user", "content": f"Study material:\n\n{context}"}]}
+        )
+
+    data = resp.json()
+    if "error" in data:
+        raise HTTPException(500, data["error"]["message"])
+
+    raw_text = data["content"][0]["text"]
+    try:
+        flashcards = json.loads(raw_text)
+    except json.JSONDecodeError:
+        # Try to extract JSON array from the response
+        match = re.search(r'\[.*\]', raw_text, re.DOTALL)
+        if match:
+            try:
+                flashcards = json.loads(match.group())
+            except json.JSONDecodeError:
+                raise HTTPException(500, "Failed to parse flashcard response from AI")
+        else:
+            raise HTTPException(500, "Failed to parse flashcard response from AI")
+
+    return {"flashcards": flashcards, "topic": body.topic}
+
+# ─── QUIZ GENERATION ─────────────────────────────────────────────────────────
+
+class QuizRequest(BaseModel):
+    topic: str = ""
+    count: int = 5
+
+@app.post("/api/sessions/{sid}/quiz")
+@limiter.limit("15/minute")
+async def quiz_route(request: Request, sid: str, body: QuizRequest):
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(500, "ANTHROPIC_API_KEY not configured on server")
+    conn = get_db()
+    chunks = _get_session_chunks(conn, sid, body.topic)
+    conn.close()
+    if not chunks:
+        raise HTTPException(400, "No documents uploaded yet")
+
+    context = "\n\n".join(c["text"] for c in chunks)
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01",
+                     "content-type": "application/json"},
+            json={"model": CHAT_MODEL, "max_tokens": 2048,
+                  "system": f"Generate exactly {body.count} multiple choice questions from the study material. Return ONLY valid JSON array: [{{\"question\": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"correct\": 0, \"explanation\": \"...\"}}]. The correct field is the 0-based index. No markdown.",
+                  "messages": [{"role": "user", "content": f"Study material:\n\n{context}"}]}
+        )
+
+    data = resp.json()
+    if "error" in data:
+        raise HTTPException(500, data["error"]["message"])
+
+    raw_text = data["content"][0]["text"]
+    try:
+        questions = json.loads(raw_text)
+    except json.JSONDecodeError:
+        match = re.search(r'\[.*\]', raw_text, re.DOTALL)
+        if match:
+            try:
+                questions = json.loads(match.group())
+            except json.JSONDecodeError:
+                raise HTTPException(500, "Failed to parse quiz response from AI")
+        else:
+            raise HTTPException(500, "Failed to parse quiz response from AI")
+
+    return {"questions": questions, "topic": body.topic}
+
+# ─── STUDY PROGRESS ──────────────────────────────────────────────────────────
+
+class ProgressLog(BaseModel):
+    activity_type: str
+    topic: str = ""
+    score: Optional[float] = None
+    total: Optional[float] = None
+
+@app.post("/api/sessions/{sid}/progress")
+def log_progress(sid: str, body: ProgressLog, authorization: Optional[str] = Header(None)):
+    user = require_auth(authorization)
+    conn = get_db()
+    if not conn.execute("SELECT id FROM sessions WHERE id=?", (sid,)).fetchone():
+        conn.close(); raise HTTPException(404, "Session not found")
+    pid = str(uuid.uuid4())
+    now = time.time()
+    conn.execute("INSERT INTO study_progress VALUES (?,?,?,?,?,?,?,?)",
+                 (pid, user["id"], sid, body.activity_type, body.topic, body.score, body.total, now))
+    conn.commit(); conn.close()
+    return {"id": pid}
+
+@app.get("/api/sessions/{sid}/progress")
+def get_progress(sid: str, authorization: Optional[str] = Header(None)):
+    user = require_auth(authorization)
+    conn = get_db()
+    activities = conn.execute(
+        "SELECT * FROM study_progress WHERE user_id=? AND session_id=? ORDER BY created_at DESC LIMIT 50",
+        (user["id"], sid)
+    ).fetchall()
+
+    # Calculate stats
+    all_activities = conn.execute(
+        "SELECT activity_type, score, total, created_at FROM study_progress WHERE user_id=? AND session_id=?",
+        (user["id"], sid)
+    ).fetchall()
+    conn.close()
+
+    total_searches = sum(1 for a in all_activities if a["activity_type"] == "search")
+    total_quizzes = sum(1 for a in all_activities if a["activity_type"] == "quiz")
+    total_flashcards = sum(1 for a in all_activities if a["activity_type"] == "flashcard")
+
+    quiz_scores = [(a["score"], a["total"]) for a in all_activities
+                   if a["activity_type"] == "quiz" and a["score"] is not None and a["total"] is not None and a["total"] > 0]
+    avg_quiz_score = 0.0
+    if quiz_scores:
+        avg_quiz_score = round(sum(s / t for s, t in quiz_scores) / len(quiz_scores) * 100, 1)
+
+    # Calculate streak days: consecutive days with activity looking back from today
+    import datetime
+    today = datetime.date.today()
+    activity_dates = set()
+    for a in all_activities:
+        d = datetime.date.fromtimestamp(a["created_at"])
+        activity_dates.add(d)
+
+    streak_days = 0
+    check_date = today
+    while check_date in activity_dates:
+        streak_days += 1
+        check_date -= datetime.timedelta(days=1)
+
+    return {
+        "activities": [dict(a) for a in activities],
+        "stats": {
+            "total_searches": total_searches,
+            "total_quizzes": total_quizzes,
+            "total_flashcards": total_flashcards,
+            "avg_quiz_score": avg_quiz_score,
+            "streak_days": streak_days,
+        }
+    }
 
 # ─── CONVERSATIONS ────────────────────────────────────────────────────────────
 
@@ -764,24 +1178,82 @@ def get_units_for_class(ap_class: str):
         units = []
     return {"ap_class": ap_class, "units": units}
 
-# ─── UPVOTES ─────────────────────────────────────────────────────────────────
+# ─── UPVOTES (TOGGLE) ───────────────────────────────────────────────────────
 
 @app.post("/api/community/posts/{post_id}/upvote")
 def upvote_post(post_id: str, authorization: Optional[str] = Header(None)):
-    require_auth(authorization)
+    user = require_auth(authorization)
     conn = get_db()
     row = conn.execute("SELECT id, upvotes FROM community_posts WHERE id=?", (post_id,)).fetchone()
     if not row:
         conn.close(); raise HTTPException(404, "Post not found")
-    new_count = (row["upvotes"] or 0) + 1
-    conn.execute("UPDATE community_posts SET upvotes=? WHERE id=?", (new_count, post_id))
+
+    existing_vote = conn.execute(
+        "SELECT user_id FROM user_votes WHERE user_id=? AND post_id=?",
+        (user["id"], post_id)
+    ).fetchone()
+
+    if existing_vote:
+        # Already voted — remove vote and decrement
+        conn.execute("DELETE FROM user_votes WHERE user_id=? AND post_id=?", (user["id"], post_id))
+        new_count = max((row["upvotes"] or 0) - 1, 0)
+        conn.execute("UPDATE community_posts SET upvotes=? WHERE id=?", (new_count, post_id))
+        conn.commit(); conn.close()
+        return {"upvotes": new_count, "voted": False}
+    else:
+        # Not voted — add vote and increment
+        conn.execute("INSERT INTO user_votes VALUES (?,?,?)", (user["id"], post_id, time.time()))
+        new_count = (row["upvotes"] or 0) + 1
+        conn.execute("UPDATE community_posts SET upvotes=? WHERE id=?", (new_count, post_id))
+        conn.commit(); conn.close()
+        return {"upvotes": new_count, "voted": True}
+
+# ─── SHARING NOTEBOOKS ──────────────────────────────────────────────────────
+
+@app.post("/api/sessions/{sid}/share")
+def share_session(sid: str, authorization: Optional[str] = Header(None)):
+    user = require_auth(authorization)
+    conn = get_db()
+    sess = conn.execute("SELECT id FROM sessions WHERE id=?", (sid,)).fetchone()
+    if not sess:
+        conn.close(); raise HTTPException(404, "Session not found")
+    token = secrets.token_urlsafe(16)
+    conn.execute("INSERT INTO share_links VALUES (?,?,?,?)", (token, sid, user["id"], time.time()))
     conn.commit(); conn.close()
-    return {"upvotes": new_count}
+    return {"share_url": f"/shared/{token}", "token": token}
+
+@app.get("/api/shared/{token}")
+def get_shared_session(token: str):
+    conn = get_db()
+    link = conn.execute("SELECT * FROM share_links WHERE token=?", (token,)).fetchone()
+    if not link:
+        conn.close(); raise HTTPException(404, "Share link not found")
+    sess = conn.execute("SELECT id, name FROM sessions WHERE id=?", (link["session_id"],)).fetchone()
+    if not sess:
+        conn.close(); raise HTTPException(404, "Session not found")
+    docs = conn.execute(
+        "SELECT id, filename, file_type, slide_count, uploaded_at FROM documents WHERE session_id=? ORDER BY uploaded_at",
+        (link["session_id"],)
+    ).fetchall()
+    user = conn.execute("SELECT username FROM users WHERE id=?", (link["user_id"],)).fetchone()
+    conn.close()
+    return {
+        "session_name": sess["name"],
+        "documents": [dict(d) for d in docs],
+        "shared_by": user["username"] if user else "Unknown"
+    }
+
+# ─── HEALTH & LANDING ───────────────────────────────────────────────────────
 
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": "4.0.0", "search": "BM25", "ai": "optional"}
 
 @app.get("/")
-def serve_index():
+def landing_page():
+    """Serve landing page if no auth, otherwise redirect to app"""
+    return FileResponse(Path(__file__).parent / "landing.html", media_type="text/html")
+
+@app.get("/app")
+def serve_app():
     return FileResponse(Path(__file__).parent / "index.html", media_type="text/html")

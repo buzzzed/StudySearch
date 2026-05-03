@@ -600,6 +600,84 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
   cursor:pointer;color:var(--text2);transition:all .15s;
 }
 .profile-edit-btn:hover{background:var(--blue-dim);color:var(--blue-text);border-color:var(--blue-border)}
+
+/* ── NEW FEATURE COLORS ── */
+:root{--green:#4ade80;--green-dim:#0d2218;--green-text:#86efac;--green-border:rgba(74,222,128,0.25);--orange:#f59e0b;--orange-dim:#1a1508}
+
+/* ── GENERIC VIEW ── */
+.feature-view{flex:1;display:none;flex-direction:column;overflow:hidden}
+.feature-view.active{display:flex}
+.fv-topbar{padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.fv-body{flex:1;overflow-y:auto;padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.fv-body::-webkit-scrollbar{width:3px}
+.fv-body::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+.fv-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fv-input{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px 13px;outline:none;font-family:var(--sans);font-size:13px;color:var(--text);transition:border-color .2s;flex:1;min-width:180px}
+.fv-input:focus{border-color:var(--accent-border)}
+.fv-input::placeholder{color:var(--text3)}
+.fv-select{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px 12px;font-family:var(--sans);font-size:12.5px;color:var(--text);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%237d7a76' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.fv-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);padding:10px 20px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.fv-btn:hover{background:var(--blue);box-shadow:0 0 12px var(--blue-glow)}
+.fv-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── FLASHCARDS ── */
+.fc-container{display:flex;flex-direction:column;align-items:center;gap:20px;padding:2rem 0}
+.fc-progress{font-size:12px;color:var(--text3);font-family:var(--mono)}
+.fc-card-wrap{perspective:800px;width:100%;max-width:500px;height:280px;cursor:pointer}
+.fc-card{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .5s ease}
+.fc-card.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r-lg);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;padding:32px;text-align:center}
+.fc-front{background:var(--surface);font-family:var(--serif);font-size:18px;line-height:1.8;color:var(--text)}
+.fc-back{background:var(--surface2);transform:rotateY(180deg);font-size:15px;line-height:1.8;color:var(--accent-text)}
+.fc-label{position:absolute;top:14px;left:18px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono);color:var(--text3)}
+.fc-nav{display:flex;gap:12px;align-items:center}
+.fc-nav-btn{background:none;border:1px solid var(--border2);border-radius:var(--r-sm);padding:8px 20px;cursor:pointer;color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:500;transition:all .15s}
+.fc-nav-btn:hover{background:var(--blue-dim);color:var(--blue-text);border-color:var(--blue-border)}
+.fc-nav-btn:disabled{opacity:.25;cursor:not-allowed}
+
+/* ── QUIZ ── */
+.quiz-question{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;animation:fadeUp .2s ease}
+.quiz-q-text{font-family:var(--serif);font-size:17px;line-height:1.8;color:var(--text);margin-bottom:18px}
+.quiz-q-num{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px}
+.quiz-options{display:flex;flex-direction:column;gap:8px}
+.quiz-opt{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:all .15s;font-size:13.5px;color:var(--text)}
+.quiz-opt:hover:not(.answered){background:var(--blue-dim);border-color:var(--blue-border)}
+.quiz-opt.selected{border-color:var(--accent-border);background:var(--accent-dim)}
+.quiz-opt.correct{border-color:var(--green-border);background:var(--green-dim);color:var(--green-text)}
+.quiz-opt.incorrect{border-color:rgba(224,92,92,.35);background:var(--red-dim);color:var(--red)}
+.quiz-opt.answered{cursor:default}
+.quiz-opt-letter{width:24px;height:24px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;font-family:var(--mono)}
+.quiz-explanation{margin-top:14px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;color:var(--text2);line-height:1.7}
+.quiz-nav{display:flex;gap:10px;margin-top:4px}
+.quiz-score{text-align:center;padding:3rem;animation:fadeUp .3s ease}
+.quiz-score h2{font-family:var(--serif);font-size:28px;color:var(--text);margin-bottom:8px}
+.quiz-score .score-big{font-size:48px;font-weight:700;font-family:var(--mono);color:var(--accent-text);margin:16px 0}
+.quiz-score p{color:var(--text2);font-size:14px;margin-bottom:20px}
+
+/* ── PROGRESS ── */
+.prog-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.prog-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;animation:fadeUp .2s ease}
+.prog-stat-card .stat-val{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--accent-text);line-height:1.2}
+.prog-stat-card .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+.prog-activity{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;font-size:12.5px}
+.prog-act-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.prog-act-icon.search{background:var(--accent-dim);color:var(--accent-text)}
+.prog-act-icon.quiz{background:var(--green-dim);color:var(--green-text)}
+.prog-act-icon.flashcards{background:var(--blue-dim);color:var(--blue-text)}
+.prog-act-info{flex:1}
+.prog-act-type{font-weight:500;color:var(--text)}
+.prog-act-detail{font-size:11px;color:var(--text3)}
+
+/* ── SHARE MODAL ── */
+.share-url-box{display:flex;gap:8px;margin-top:12px}
+.share-url-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px 13px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none}
+.share-copy-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);padding:10px 16px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.share-copy-btn:hover{background:var(--blue)}
+
+/* ── PASSWORD RESET ── */
+.reset-form{display:flex;flex-direction:column;gap:12px}
+.reset-link{font-size:11.5px;color:var(--accent-text);cursor:pointer;text-align:right;margin-top:-4px}
+.reset-link:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -615,6 +693,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 
     <div class="nav-tabs">
       <button class="nav-tab active" id="navStudy" onclick="switchView('study')">Study</button>
+      <button class="nav-tab" id="navFlashcards" onclick="switchView('flashcards')">Cards</button>
+      <button class="nav-tab" id="navQuiz" onclick="switchView('quiz')">Quiz</button>
+      <button class="nav-tab" id="navProgress" onclick="switchView('progress')">Progress</button>
       <button class="nav-tab" id="navCommunity" onclick="switchView('community')">Community</button>
     </div>
 
@@ -657,6 +738,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
         </div>
       </div>
       <div class="tb-btns">
+        <button class="btn-sm" onclick="shareSession()">Share</button>
         <button class="btn-sm" onclick="openUpload()">+ Upload</button>
       </div>
     </div>
@@ -742,6 +824,63 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 
     </div><!-- /community-view -->
 
+    <!-- FLASHCARDS VIEW -->
+    <div class="feature-view" id="flashcardsView">
+      <div class="fv-topbar">
+        <div class="tb-left"><div class="status-dot" style="background:var(--amber)"></div><div><div class="tb-title">Flashcards</div><div class="tb-sub">AI-generated from your documents</div></div></div>
+      </div>
+      <div class="fv-body" id="fcBody">
+        <div class="fv-controls">
+          <input class="fv-input" id="fcTopic" placeholder="Topic (optional — leave blank for all)" />
+          <select class="fv-select" id="fcCount"><option value="5">5 cards</option><option value="10" selected>10 cards</option><option value="15">15 cards</option><option value="20">20 cards</option></select>
+          <button class="fv-btn" id="fcGenBtn" onclick="generateFlashcards()">Generate</button>
+        </div>
+        <div id="fcArea">
+          <div class="comm-empty"><h3>Generate flashcards</h3><p>Upload documents first, then generate flashcards from your study material.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ VIEW -->
+    <div class="feature-view" id="quizView">
+      <div class="fv-topbar">
+        <div class="tb-left"><div class="status-dot" style="background:var(--green)"></div><div><div class="tb-title">Quiz Mode</div><div class="tb-sub">Test yourself with AI-generated questions</div></div></div>
+      </div>
+      <div class="fv-body" id="quizBody">
+        <div class="fv-controls">
+          <input class="fv-input" id="quizTopic" placeholder="Topic (optional)" />
+          <select class="fv-select" id="quizCount"><option value="5" selected>5 questions</option><option value="10">10 questions</option></select>
+          <button class="fv-btn" id="quizGenBtn" onclick="generateQuiz()">Start Quiz</button>
+        </div>
+        <div id="quizArea">
+          <div class="comm-empty"><h3>Start a quiz</h3><p>Upload documents first, then test your knowledge with AI-generated questions.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRESS VIEW -->
+    <div class="feature-view" id="progressView">
+      <div class="fv-topbar">
+        <div class="tb-left"><div class="status-dot" style="background:var(--green)"></div><div><div class="tb-title">Progress</div><div class="tb-sub">Track your study activity</div></div></div>
+      </div>
+      <div class="fv-body" id="progressBody">
+        <div id="progressArea"><div class="comm-empty"><h3>No activity yet</h3><p>Start studying to see your progress here.</p></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-bg" id="shareModal">
+  <div class="modal" style="max-width:440px">
+    <h3>Share your notebook</h3>
+    <p>Anyone with this link can view your uploaded documents (read-only).</p>
+    <div class="share-url-box">
+      <input class="share-url-input" id="shareUrl" readonly />
+      <button class="share-copy-btn" onclick="copyShareUrl()">Copy</button>
+    </div>
+    <div class="modal-foot"><button class="btn-cancel" onclick="document.getElementById('shareModal').classList.remove('open')">Close</button></div>
   </div>
 </div>
 
@@ -874,7 +1013,32 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
         <input class="auth-input" id="loginPassword" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <button class="auth-btn" id="loginBtn" onclick="doLogin()">Sign in</button>
+      <div class="reset-link" onclick="switchTab('reset')">Forgot password?</div>
       <div class="auth-divider">Don't have an account? <a href="#" onclick="switchTab('signup');return false;" style="color:var(--accent-text);text-decoration:none">Create one</a></div>
+    </div>
+
+    <!-- RESET FORM -->
+    <div id="resetForm" class="auth-form" style="display:none">
+      <div class="auth-error" id="resetError"></div>
+      <div id="resetStep1">
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input class="auth-input" id="resetEmail" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')requestReset()"/>
+        </div>
+        <button class="auth-btn" onclick="requestReset()">Send Reset Token</button>
+      </div>
+      <div id="resetStep2" style="display:none">
+        <div class="auth-field">
+          <label class="auth-label">Reset Token</label>
+          <input class="auth-input" id="resetToken" type="text" placeholder="Paste your reset token"/>
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">New Password <span style="color:var(--text3);font-weight:400">(min. 6 characters)</span></label>
+          <input class="auth-input" id="resetNewPw" type="password" placeholder="New password" onkeydown="if(event.key==='Enter')doReset()"/>
+        </div>
+        <button class="auth-btn" onclick="doReset()">Reset Password</button>
+      </div>
+      <div class="auth-divider"><a href="#" onclick="switchTab('login');return false;" style="color:var(--accent-text);text-decoration:none">Back to Sign in</a></div>
     </div>
 
     <!-- SIGNUP FORM -->
@@ -959,11 +1123,11 @@ async function newSession() {
 
 // ─── AUTH FORMS ───────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  const isLogin = tab === 'login';
-  document.getElementById('loginForm').style.display   = isLogin ? 'flex' : 'none';
-  document.getElementById('signupForm').style.display  = isLogin ? 'none' : 'flex';
-  document.getElementById('tabLogin').classList.toggle('active', isLogin);
-  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+  document.getElementById('loginForm').style.display   = tab === 'login' ? 'flex' : 'none';
+  document.getElementById('signupForm').style.display  = tab === 'signup' ? 'flex' : 'none';
+  document.getElementById('resetForm').style.display   = tab === 'reset' ? 'flex' : 'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
 }
 
 async function doLogin() {
@@ -1111,7 +1275,6 @@ async function runSearch() {
   area.innerHTML = '<div class="thinking"><div class="dots"><span></span><span></span><span></span></div>Finding relevant content…</div>';
 
   try {
-    // Step 1: BM25 to find top chunks
     const searchData = await api(`/sessions/${sessionId}/search`, 'POST', { query: q });
     const results = searchData.results;
 
@@ -1121,25 +1284,80 @@ async function runSearch() {
       return;
     }
 
-    // Show "generating answer" state
-    area.innerHTML = '<div class="thinking"><div class="dots"><span></span><span></span><span></span></div>Generating answer from your documents…</div>';
-
-    // Step 2: send top chunks to AI for a direct answer
     currentChunkIds = results.slice(0, 5).map(r => r.id);
+
+    // Build answer panel with empty text for streaming
+    area.innerHTML = '';
+    const panel = document.createElement('div');
+    panel.className = 'ai-answer-panel';
+    panel.innerHTML = `
+      <div class="aap-head"><span class="aap-badge">✦ AI Answer</span><span class="aap-model">Claude Sonnet · streaming</span></div>
+      <div class="aap-body">
+        <div class="aap-text" id="answerText"><span class="dots" style="display:inline-flex"><span></span><span></span><span></span></span></div>
+        <div class="aap-follow">
+          <input type="text" id="followInput" placeholder="Ask a follow-up question…" onkeydown="if(event.key==='Enter')sendFollowUp()"/>
+          <button class="aap-follow-btn" id="followBtn" onclick="sendFollowUp()">Ask</button>
+        </div>
+      </div>`;
+    area.appendChild(panel);
+
+    // Stream the AI response
     try {
-      const aiData = await api(`/sessions/${sessionId}/explain`, 'POST', {
-        query: q,
-        chunk_ids: currentChunkIds,
-        conversation_id: null
-      });
-      currentConvId = aiData.conversation_id;
-      renderAnswer(aiData.answer, results);
+      const textEl = document.getElementById('answerText');
+      const body = JSON.stringify({ query: q, chunk_ids: currentChunkIds, conversation_id: null });
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+      const resp = await fetch(API + `/sessions/${sessionId}/explain-stream`, { method: 'POST', headers, body });
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let fullAnswer = '';
+      let buffer = '';
+      textEl.innerHTML = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const d = JSON.parse(line.slice(6));
+            if (d.token) { fullAnswer += d.token; textEl.textContent = fullAnswer; }
+            if (d.done) { currentConvId = d.conversation_id; }
+          } catch(e) {}
+        }
+      }
+      if (!fullAnswer) textEl.textContent = '(No answer generated)';
       await loadConvs();
+      // Log search activity
+      api(`/sessions/${sessionId}/progress`, 'POST', { activity_type: 'search', topic: q }).catch(()=>{});
     } catch(aiErr) {
-      // AI failed — show error banner above results so user can see why
-      area.innerHTML = `<div class="no-results" style="background:var(--red-dim);border-color:var(--red);color:var(--red);margin-bottom:12px">AI error: ${esc(aiErr.message)}</div>`;
-      renderFallbackResults(results, q);
+      // Fallback to non-streaming
+      try {
+        const aiData = await api(`/sessions/${sessionId}/explain`, 'POST', { query: q, chunk_ids: currentChunkIds, conversation_id: null });
+        currentConvId = aiData.conversation_id;
+        document.getElementById('answerText').textContent = aiData.answer;
+        await loadConvs();
+      } catch(e2) {
+        area.innerHTML = '';
+        renderFallbackResults(results, q);
+      }
     }
+
+    // Add sources below
+    const srcSection = document.createElement('div');
+    srcSection.className = 'sources-section';
+    const maxScore = results[0].score;
+    const threshold = maxScore * 0.5;
+    const relevant = results.filter(r => r.score >= threshold);
+    const weak = results.filter(r => r.score < threshold);
+    const makeCard = (r, isWeak) => `<div class="src-card${isWeak?' src-weak':''}"><div class="src-head"><span class="src-slide">Slide ${r.slide_num}</span><span class="src-name">${esc(r.doc_name)}</span></div><div class="src-body">${r.highlighted}</div></div>`;
+    let weakHTML = weak.length ? `<button class="weak-toggle" onclick="toggleWeak(this)"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>${weak.length} less relevant</button><div id="weakGrid" style="display:none;flex-direction:column;gap:8px;margin-top:4px">${weak.map(r=>makeCard(r,true)).join('')}</div>` : '';
+    srcSection.innerHTML = `<button class="sources-toggle" onclick="toggleSources(this)"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 4l3 3 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>${relevant.length} source${relevant.length!==1?'s':''}</button><div class="sources-grid" id="sourcesGrid" style="display:none">${relevant.map(r=>makeCard(r,false)).join('')}${weakHTML}</div>`;
+    area.appendChild(srcSection);
 
   } catch(e) {
     area.innerHTML = `<div class="no-results">Error: ${esc(e.message)}</div>`;
@@ -1336,28 +1554,17 @@ let profileUserId = null;
 let editingBio = false;
 
 function switchView(view) {
-  const studyView = document.getElementById('studyView');
-  const commView  = document.getElementById('communityView');
-  const navStudy  = document.getElementById('navStudy');
-  const navComm   = document.getElementById('navCommunity');
-
-  if (view === 'community') {
-    studyView.classList.remove('active');
-    studyView.style.display = 'none';
-    commView.classList.add('active');
-    commView.style.display = 'flex';
-    navStudy.classList.remove('active');
-    navComm.classList.add('active');
-    if (!commClasses.length) loadClasses();
-    loadPosts();
-  } else {
-    commView.classList.remove('active');
-    commView.style.display = 'none';
-    studyView.classList.add('active');
-    studyView.style.display = 'flex';
-    navComm.classList.remove('active');
-    navStudy.classList.add('active');
-  }
+  const views = ['study','community','flashcards','quiz','progress'];
+  const els = {study:'studyView',community:'communityView',flashcards:'flashcardsView',quiz:'quizView',progress:'progressView'};
+  const navs = {study:'navStudy',community:'navCommunity',flashcards:'navFlashcards',quiz:'navQuiz',progress:'navProgress'};
+  views.forEach(v => {
+    const el = document.getElementById(els[v]);
+    const nav = document.getElementById(navs[v]);
+    if (v === view) { el.classList.add('active'); el.style.display = 'flex'; nav.classList.add('active'); }
+    else { el.classList.remove('active'); el.style.display = 'none'; nav.classList.remove('active'); }
+  });
+  if (view === 'community') { if (!commClasses.length) loadClasses(); loadPosts(); }
+  if (view === 'progress') loadProgress();
 }
 
 async function loadClasses() {
@@ -1462,7 +1669,7 @@ async function upvotePost(postId, btn) {
     const d = await api(`/community/posts/${postId}/upvote`, 'POST');
     const countEl = btn.parentElement.querySelector('.pc-vote-count');
     countEl.textContent = d.upvotes;
-    btn.classList.add('upvoted');
+    btn.classList.toggle('upvoted', d.voted);
   } catch(e) { toast('Error: ' + e.message, 'err'); }
 }
 
@@ -1526,6 +1733,8 @@ async function upvotePostDetail(postId, btn) {
   try {
     const d = await api(`/community/posts/${postId}/upvote`, 'POST');
     btn.querySelector('span').textContent = d.upvotes;
+    btn.style.borderColor = d.voted ? 'var(--blue-border)' : 'var(--border)';
+    btn.style.color = d.voted ? 'var(--blue-text)' : 'var(--text2)';
   } catch(e) { toast('Error: ' + e.message, 'err'); }
 }
 
@@ -1680,8 +1889,211 @@ function timeAgo(ts) {
   return Math.floor(diff / 86400) + 'd ago';
 }
 
+// ─── PASSWORD RESET ─────────────────────────────────────────────────────────
+async function requestReset() {
+  const email = document.getElementById('resetEmail').value.trim();
+  const errEl = document.getElementById('resetError');
+  errEl.classList.remove('show');
+  if (!email) { errEl.textContent = 'Enter your email'; errEl.classList.add('show'); return; }
+  try {
+    const d = await api('/auth/reset-request', 'POST', { email });
+    if (d.token) {
+      document.getElementById('resetToken').value = d.token;
+      document.getElementById('resetStep1').style.display = 'none';
+      document.getElementById('resetStep2').style.display = 'flex';
+      toast('Reset token generated', 'ok');
+    } else {
+      toast('If that email exists, a reset token was generated', 'ok');
+    }
+  } catch(e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+}
+
+async function doReset() {
+  const token = document.getElementById('resetToken').value.trim();
+  const pw = document.getElementById('resetNewPw').value;
+  const errEl = document.getElementById('resetError');
+  errEl.classList.remove('show');
+  if (!token || !pw) { errEl.textContent = 'Fill in all fields'; errEl.classList.add('show'); return; }
+  if (pw.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; errEl.classList.add('show'); return; }
+  try {
+    await api('/auth/reset', 'POST', { token, new_password: pw });
+    toast('Password reset! You can now sign in.', 'ok');
+    document.getElementById('resetStep1').style.display = 'block';
+    document.getElementById('resetStep2').style.display = 'none';
+    switchTab('login');
+  } catch(e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+}
+
+// ─── FLASHCARDS ─────────────────────────────────────────────────────────────
+let fcCards = [];
+let fcIndex = 0;
+
+async function generateFlashcards() {
+  const topic = document.getElementById('fcTopic').value.trim();
+  const count = parseInt(document.getElementById('fcCount').value);
+  const btn = document.getElementById('fcGenBtn');
+  const area = document.getElementById('fcArea');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  area.innerHTML = '<div class="thinking"><div class="dots"><span></span><span></span><span></span></div>AI is creating flashcards…</div>';
+  try {
+    const d = await api(`/sessions/${sessionId}/flashcards`, 'POST', { topic, count });
+    fcCards = d.flashcards;
+    fcIndex = 0;
+    if (!fcCards.length) { area.innerHTML = '<div class="comm-empty"><h3>No flashcards generated</h3><p>Try a different topic or upload more material.</p></div>'; return; }
+    renderFlashcard();
+  } catch(e) { area.innerHTML = `<div class="comm-empty"><h3>Error</h3><p>${esc(e.message)}</p></div>`; toast(e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Generate';
+}
+
+function renderFlashcard() {
+  const area = document.getElementById('fcArea');
+  const c = fcCards[fcIndex];
+  area.innerHTML = `
+    <div class="fc-container">
+      <div class="fc-progress">Card ${fcIndex + 1} of ${fcCards.length}</div>
+      <div class="fc-card-wrap" onclick="this.querySelector('.fc-card').classList.toggle('flipped')">
+        <div class="fc-card">
+          <div class="fc-face fc-front"><span class="fc-label">Question</span>${esc(c.front)}</div>
+          <div class="fc-face fc-back"><span class="fc-label">Answer</span>${esc(c.back)}</div>
+        </div>
+      </div>
+      <div class="fc-nav">
+        <button class="fc-nav-btn" onclick="fcPrev()" ${fcIndex===0?'disabled':''}>← Prev</button>
+        <button class="fc-nav-btn" onclick="fcNext()">${fcIndex===fcCards.length-1?'Finish →':'Next →'}</button>
+      </div>
+    </div>`;
+}
+
+function fcPrev() { if (fcIndex > 0) { fcIndex--; renderFlashcard(); } }
+function fcNext() {
+  if (fcIndex < fcCards.length - 1) { fcIndex++; renderFlashcard(); }
+  else {
+    document.getElementById('fcArea').innerHTML = `<div class="quiz-score"><h2>All done!</h2><div class="score-big">${fcCards.length}</div><p>flashcards reviewed</p><button class="fv-btn" onclick="generateFlashcards()">Generate More</button></div>`;
+    api(`/sessions/${sessionId}/progress`, 'POST', { activity_type: 'flashcards', topic: document.getElementById('fcTopic').value.trim(), score: fcCards.length, total: fcCards.length }).catch(()=>{});
+  }
+}
+
+// ─── QUIZ ───────────────────────────────────────────────────────────────────
+let quizQs = [];
+let quizIdx = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+async function generateQuiz() {
+  const topic = document.getElementById('quizTopic').value.trim();
+  const count = parseInt(document.getElementById('quizCount').value);
+  const btn = document.getElementById('quizGenBtn');
+  const area = document.getElementById('quizArea');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  area.innerHTML = '<div class="thinking"><div class="dots"><span></span><span></span><span></span></div>AI is creating questions…</div>';
+  try {
+    const d = await api(`/sessions/${sessionId}/quiz`, 'POST', { topic, count });
+    quizQs = d.questions;
+    quizIdx = 0; quizScore = 0; quizAnswered = false;
+    if (!quizQs.length) { area.innerHTML = '<div class="comm-empty"><h3>No questions generated</h3><p>Try a different topic or upload more material.</p></div>'; return; }
+    renderQuizQ();
+  } catch(e) { area.innerHTML = `<div class="comm-empty"><h3>Error</h3><p>${esc(e.message)}</p></div>`; toast(e.message, 'err'); }
+  btn.disabled = false; btn.textContent = 'Start Quiz';
+}
+
+function renderQuizQ() {
+  const area = document.getElementById('quizArea');
+  const q = quizQs[quizIdx];
+  const letters = ['A','B','C','D'];
+  quizAnswered = false;
+  area.innerHTML = `
+    <div class="quiz-question">
+      <div class="quiz-q-num">Question ${quizIdx+1} of ${quizQs.length}</div>
+      <div class="quiz-q-text">${esc(q.question)}</div>
+      <div class="quiz-options" id="quizOpts">
+        ${q.options.map((o,i) => `<div class="quiz-opt" data-idx="${i}" onclick="selectQuizOpt(${i})"><span class="quiz-opt-letter">${letters[i]}</span>${esc(o)}</div>`).join('')}
+      </div>
+      <div id="quizExpl" style="display:none"></div>
+    </div>
+    <div class="quiz-nav"><button class="fv-btn" id="quizNextBtn" onclick="quizNext()" disabled>Next →</button></div>`;
+}
+
+function selectQuizOpt(idx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizQs[quizIdx];
+  const opts = document.querySelectorAll('#quizOpts .quiz-opt');
+  opts.forEach(o => {
+    o.classList.add('answered');
+    const oi = parseInt(o.dataset.idx);
+    if (oi === q.correct) o.classList.add('correct');
+    else if (oi === idx) o.classList.add('incorrect');
+  });
+  if (idx === q.correct) quizScore++;
+  if (q.explanation) {
+    const expl = document.getElementById('quizExpl');
+    expl.style.display = 'block';
+    expl.innerHTML = `<div class="quiz-explanation"><strong>Explanation:</strong> ${esc(q.explanation)}</div>`;
+  }
+  document.getElementById('quizNextBtn').disabled = false;
+}
+
+function quizNext() {
+  if (quizIdx < quizQs.length - 1) { quizIdx++; renderQuizQ(); }
+  else {
+    const pct = Math.round((quizScore / quizQs.length) * 100);
+    document.getElementById('quizArea').innerHTML = `
+      <div class="quiz-score">
+        <h2>Quiz Complete!</h2>
+        <div class="score-big">${pct}%</div>
+        <p>${quizScore} out of ${quizQs.length} correct</p>
+        <button class="fv-btn" onclick="generateQuiz()">Try Again</button>
+      </div>`;
+    api(`/sessions/${sessionId}/progress`, 'POST', { activity_type: 'quiz', topic: document.getElementById('quizTopic').value.trim(), score: quizScore, total: quizQs.length }).catch(()=>{});
+  }
+}
+
+// ─── PROGRESS ───────────────────────────────────────────────────────────────
+async function loadProgress() {
+  const area = document.getElementById('progressArea');
+  area.innerHTML = '<div class="thinking"><div class="dots"><span></span><span></span><span></span></div>Loading progress…</div>';
+  try {
+    const d = await api(`/sessions/${sessionId}/progress`);
+    const s = d.stats;
+    let html = `<div class="prog-stats">
+      <div class="prog-stat-card"><div class="stat-val">${s.streak_days}</div><div class="stat-label">Day Streak</div></div>
+      <div class="prog-stat-card"><div class="stat-val">${s.total_searches}</div><div class="stat-label">Searches</div></div>
+      <div class="prog-stat-card"><div class="stat-val">${s.total_quizzes}</div><div class="stat-label">Quizzes</div></div>
+      <div class="prog-stat-card"><div class="stat-val">${s.total_flashcards}</div><div class="stat-label">Flashcards</div></div>
+      <div class="prog-stat-card"><div class="stat-val">${s.avg_quiz_score != null ? Math.round(s.avg_quiz_score) + '%' : '—'}</div><div class="stat-label">Avg Quiz Score</div></div>
+    </div>`;
+    if (d.activities.length) {
+      html += '<div style="font-size:12px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-top:8px">Recent Activity</div>';
+      d.activities.forEach(a => {
+        const icons = { search: '🔍', quiz: '✅', flashcards: '🃏' };
+        const icon = icons[a.activity_type] || '📚';
+        const detail = a.score != null ? `Score: ${a.score}/${a.total}` : (a.topic || '');
+        html += `<div class="prog-activity"><div class="prog-act-icon ${a.activity_type}">${icon}</div><div class="prog-act-info"><div class="prog-act-type">${a.activity_type}</div><div class="prog-act-detail">${esc(detail)} · ${timeAgo(a.created_at)}</div></div></div>`;
+      });
+    } else {
+      html += '<div class="comm-empty" style="padding:2rem"><p>No activity yet. Start searching, taking quizzes, or studying flashcards!</p></div>';
+    }
+    area.innerHTML = html;
+  } catch(e) { area.innerHTML = `<div class="comm-empty"><h3>Error</h3><p>${esc(e.message)}</p></div>`; }
+}
+
+// ─── SHARE ──────────────────────────────────────────────────────────────────
+async function shareSession() {
+  try {
+    const d = await api(`/sessions/${sessionId}/share`, 'POST');
+    const fullUrl = window.location.origin + d.share_url;
+    document.getElementById('shareUrl').value = fullUrl;
+    document.getElementById('shareModal').classList.add('open');
+  } catch(e) { toast('Error creating share link: ' + e.message, 'err'); }
+}
+
+function copyShareUrl() {
+  const input = document.getElementById('shareUrl');
+  navigator.clipboard.writeText(input.value).then(() => toast('Link copied!', 'ok')).catch(() => { input.select(); document.execCommand('copy'); toast('Link copied!', 'ok'); });
+}
+
 init().catch(e => {
-  toast('Cannot connect to backend. Is the server running on port 8000?', 'err');
+  toast('Cannot connect to backend. Is the server running?', 'err');
 });
 </script>
 </body>

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudySearch — AI-Powered Study Tool for AP Students</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#09090c;
+  --surface:#101014;
+  --surface2:#17171d;
+  --surface3:#1f1f27;
+  --border:rgba(255,255,255,0.055);
+  --border2:rgba(255,255,255,0.10);
+  --text:#edeae4;
+  --text2:#7d7a76;
+  --text3:#3e3c3a;
+  --accent:#8b5cf6;
+  --accent-dim:#1a1230;
+  --accent-text:#c4b5fd;
+  --accent-border:rgba(139,92,246,0.25);
+  --blue:#5b8dee;
+  --blue-dim:#0d1829;
+  --blue-text:#93b8fa;
+  --blue-glow:rgba(91,141,238,0.15);
+  --sans:'Inter',sans-serif;
+  --serif:'Lora',serif;
+  --r:12px;
+  --r-sm:8px;
+  --r-lg:16px;
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(32px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+@keyframes float{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+@keyframes pulse-glow{
+  0%,100%{opacity:0.4}
+  50%{opacity:1}
+}
+@keyframes gradient-shift{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+.reveal{
+  opacity:0;
+  transform:translateY(32px);
+  transition:opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1);
+}
+.reveal.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+.reveal-delay-1{transition-delay:0.1s}
+.reveal-delay-2{transition-delay:0.2s}
+.reveal-delay-3{transition-delay:0.3s}
+.reveal-delay-4{transition-delay:0.4s}
+.reveal-delay-5{transition-delay:0.5s}
+
+/* ── NAV ── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:18px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(9,9,12,0.7);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  transition:background 0.3s;
+}
+.nav-logo{
+  font-family:var(--serif);
+  font-size:20px;
+  color:var(--text);
+  letter-spacing:-0.02em;
+  text-decoration:none;
+}
+.nav-logo em{font-style:italic;color:var(--accent-text)}
+.nav-links{display:flex;align-items:center;gap:32px}
+.nav-links a{
+  font-size:14px;
+  color:var(--text2);
+  text-decoration:none;
+  transition:color 0.2s;
+  font-weight:400;
+}
+.nav-links a:hover{color:var(--text)}
+.nav-cta{
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:600;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:var(--r-sm);
+  padding:8px 20px;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all 0.2s;
+  letter-spacing:-0.01em;
+}
+.nav-cta:hover{
+  background:#7c4fe0;
+  transform:translateY(-1px);
+  box-shadow:0 4px 20px rgba(139,92,246,0.3);
+}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:120px 24px 80px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:'';
+  position:absolute;
+  top:-20%;left:50%;
+  transform:translateX(-50%);
+  width:800px;height:800px;
+  background:radial-gradient(circle,rgba(139,92,246,0.08) 0%,rgba(91,141,238,0.04) 40%,transparent 70%);
+  pointer-events:none;
+  animation:pulse-glow 6s ease-in-out infinite;
+}
+.hero::after{
+  content:'';
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-border),var(--border2),var(--accent-border),transparent);
+}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:500;
+  color:var(--accent-text);
+  background:var(--accent-dim);
+  border:1px solid var(--accent-border);
+  border-radius:999px;
+  padding:6px 18px 6px 14px;
+  margin-bottom:32px;
+  animation:fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) both;
+  letter-spacing:0.02em;
+}
+.hero-badge svg{width:14px;height:14px;flex-shrink:0}
+
+.hero-title{
+  font-family:var(--serif);
+  font-size:clamp(52px,8vw,88px);
+  font-weight:400;
+  letter-spacing:-0.03em;
+  line-height:1.05;
+  margin-bottom:12px;
+  animation:fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.1s both;
+}
+.hero-title em{
+  font-style:italic;
+  color:var(--accent-text);
+}
+.hero-tagline{
+  font-size:clamp(18px,2.5vw,24px);
+  color:var(--text2);
+  font-weight:300;
+  letter-spacing:-0.01em;
+  margin-bottom:16px;
+  animation:fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.2s both;
+}
+.hero-subtitle{
+  font-size:clamp(14px,1.5vw,17px);
+  color:var(--text3);
+  max-width:560px;
+  line-height:1.7;
+  margin-bottom:48px;
+  animation:fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s both;
+  font-weight:300;
+}
+.hero-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--sans);
+  font-size:16px;
+  font-weight:600;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:var(--r);
+  padding:16px 40px;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all 0.25s cubic-bezier(0.22,1,0.36,1);
+  letter-spacing:-0.01em;
+  animation:fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.4s both;
+  position:relative;
+  overflow:hidden;
+}
+.hero-cta::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
+  opacity:0;
+  transition:opacity 0.25s;
+}
+.hero-cta:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 40px rgba(139,92,246,0.35),0 0 0 1px rgba(139,92,246,0.3);
+}
+.hero-cta:hover::before{opacity:1}
+.hero-cta svg{width:18px;height:18px;transition:transform 0.25s}
+.hero-cta:hover svg{transform:translateX(3px)}
+
+.hero-hint{
+  margin-top:20px;
+  font-size:12px;
+  color:var(--text3);
+  animation:fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.5s both;
+}
+
+/* ── SECTION SHARED ── */
+section{
+  padding:100px 24px;
+  position:relative;
+}
+.section-inner{
+  max-width:1100px;
+  margin:0 auto;
+}
+.section-label{
+  font-size:11px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--accent-text);
+  font-weight:600;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.section-label::before{
+  content:'';
+  width:20px;height:1px;
+  background:var(--accent);
+}
+.section-title{
+  font-family:var(--serif);
+  font-size:clamp(32px,4vw,44px);
+  font-weight:400;
+  letter-spacing:-0.025em;
+  line-height:1.15;
+  margin-bottom:16px;
+}
+.section-desc{
+  font-size:16px;
+  color:var(--text2);
+  max-width:520px;
+  line-height:1.7;
+  font-weight:300;
+}
+
+/* ── FEATURES ── */
+.features{
+  background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 50%,var(--bg) 100%);
+}
+.features-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-top:56px;
+}
+.feature-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:32px 28px;
+  transition:all 0.3s cubic-bezier(0.22,1,0.36,1);
+  position:relative;
+  overflow:hidden;
+}
+.feature-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-border),transparent);
+  opacity:0;
+  transition:opacity 0.3s;
+}
+.feature-card:hover{
+  border-color:var(--border2);
+  transform:translateY(-4px);
+  box-shadow:0 12px 40px rgba(0,0,0,0.3),0 0 0 1px var(--border2);
+}
+.feature-card:hover::before{opacity:1}
+
+.feature-icon{
+  width:44px;height:44px;
+  border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+  font-size:20px;
+  position:relative;
+}
+.feature-icon.purple{background:var(--accent-dim);border:1px solid var(--accent-border)}
+.feature-icon.blue{background:var(--blue-dim);border:1px solid rgba(91,141,238,0.2)}
+.feature-icon svg{width:22px;height:22px}
+
+.feature-title{
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:-0.01em;
+  margin-bottom:8px;
+}
+.feature-desc{
+  font-size:13.5px;
+  color:var(--text2);
+  line-height:1.65;
+  font-weight:300;
+}
+
+/* ── HOW IT WORKS ── */
+.how{
+  background:var(--bg);
+  overflow:hidden;
+}
+.how::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+}
+
+.steps{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:32px;
+  margin-top:56px;
+  position:relative;
+}
+.steps::before{
+  content:'';
+  position:absolute;
+  top:56px;
+  left:calc(33.33% - 16px);
+  right:calc(33.33% - 16px);
+  height:2px;
+  background:linear-gradient(90deg,var(--accent-border),var(--border2),var(--accent-border));
+  z-index:0;
+}
+
+.step{text-align:center;position:relative;z-index:1}
+.step-num{
+  width:56px;height:56px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;
+  font-size:20px;
+  font-weight:600;
+  background:var(--surface);
+  border:2px solid var(--accent-border);
+  color:var(--accent-text);
+  position:relative;
+}
+.step-num::after{
+  content:'';
+  position:absolute;
+  inset:-6px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(139,92,246,0.1),transparent);
+}
+.step-icon{
+  font-size:28px;
+  margin-bottom:16px;
+  display:block;
+}
+.step-title{
+  font-size:18px;
+  font-weight:600;
+  margin-bottom:8px;
+  letter-spacing:-0.01em;
+}
+.step-desc{
+  font-size:14px;
+  color:var(--text2);
+  line-height:1.65;
+  max-width:280px;
+  margin:0 auto;
+  font-weight:300;
+}
+
+/* ── FORMATS ── */
+.formats{
+  background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 50%,var(--bg) 100%);
+}
+.formats::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+}
+
+.format-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-top:48px;
+  justify-content:center;
+}
+.format-badge{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 24px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  transition:all 0.3s cubic-bezier(0.22,1,0.36,1);
+  cursor:default;
+}
+.format-badge:hover{
+  border-color:var(--border2);
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(0,0,0,0.2);
+}
+.format-dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.format-dot.pptx{background:#d97344}
+.format-dot.pdf{background:#e05c5c}
+.format-dot.docx{background:var(--blue)}
+.format-dot.txt{background:var(--accent)}
+.format-dot.md{background:#7dd3a8}
+
+.format-name{
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:-0.01em;
+}
+.format-ext{
+  font-size:11px;
+  color:var(--text3);
+  font-weight:400;
+  margin-top:1px;
+}
+
+/* ── CTA SECTION ── */
+.cta-section{
+  background:var(--bg);
+  text-align:center;
+  padding:100px 24px 80px;
+  position:relative;
+}
+.cta-section::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+}
+.cta-box{
+  max-width:580px;
+  margin:0 auto;
+}
+.cta-title{
+  font-family:var(--serif);
+  font-size:clamp(28px,4vw,40px);
+  font-weight:400;
+  letter-spacing:-0.025em;
+  margin-bottom:16px;
+  line-height:1.15;
+}
+.cta-desc{
+  font-size:16px;
+  color:var(--text2);
+  line-height:1.7;
+  margin-bottom:40px;
+  font-weight:300;
+}
+.cta-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--sans);
+  font-size:16px;
+  font-weight:600;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:var(--r);
+  padding:16px 44px;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all 0.25s cubic-bezier(0.22,1,0.36,1);
+  letter-spacing:-0.01em;
+}
+.cta-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 40px rgba(139,92,246,0.35),0 0 0 1px rgba(139,92,246,0.3);
+}
+.cta-btn svg{width:18px;height:18px;transition:transform 0.25s}
+.cta-btn:hover svg{transform:translateX(3px)}
+
+/* ── FOOTER ── */
+.footer{
+  padding:40px 24px;
+  border-top:1px solid var(--border);
+  text-align:center;
+}
+.footer-logo{
+  font-family:var(--serif);
+  font-size:18px;
+  color:var(--text);
+  letter-spacing:-0.02em;
+  margin-bottom:6px;
+}
+.footer-logo em{font-style:italic;color:var(--accent-text)}
+.footer-sub{
+  font-size:13px;
+  color:var(--text3);
+  margin-bottom:16px;
+}
+.footer-link{
+  font-size:13px;
+  color:var(--accent-text);
+  text-decoration:none;
+  transition:color 0.2s;
+}
+.footer-link:hover{color:var(--accent)}
+.footer-copy{
+  margin-top:24px;
+  font-size:11px;
+  color:var(--text3);
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .features-grid{grid-template-columns:repeat(2,1fr)}
+  .steps{grid-template-columns:1fr;max-width:360px;margin-left:auto;margin-right:auto}
+  .steps::before{display:none}
+}
+@media(max-width:600px){
+  .nav{padding:14px 20px}
+  .nav-links a:not(.nav-cta){display:none}
+  .features-grid{grid-template-columns:1fr}
+  section{padding:72px 20px}
+  .hero{padding:100px 20px 60px}
+  .format-row{flex-direction:column;align-items:center}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <a href="#" class="nav-logo">Study<em>Search</em></a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="#formats">Formats</a>
+    <a href="/app" class="nav-cta">Open App</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-badge">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Built for AP Students
+  </div>
+  <h1 class="hero-title">Study<em>Search</em></h1>
+  <p class="hero-tagline">Your AI-powered study assistant</p>
+  <p class="hero-subtitle">Upload your slides, ask questions, get instant answers from your own notes. Built for AP students who want to study smarter, not harder.</p>
+  <a href="/app" class="hero-cta">
+    Get Started
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+  </a>
+  <p class="hero-hint">No sign-up required. Start studying in seconds.</p>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <div class="reveal">
+      <p class="section-label">Features</p>
+      <h2 class="section-title">Everything you need to ace your exams</h2>
+      <p class="section-desc">Powerful tools that turn your class materials into an interactive study experience.</p>
+    </div>
+    <div class="features-grid">
+
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 2-1.5 3.5-3 4.5V13a2 2 0 0 1-4 0v-1.5C8.5 10.5 7 9 7 7a5 5 0 0 1 5-5z"/><path d="M10 17h4"/><path d="M10 20h4"/></svg>
+        </div>
+        <h3 class="feature-title">AI-Powered Answers</h3>
+        <p class="feature-desc">Ask questions in natural language and get direct, accurate answers sourced from your uploaded notes and slides.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#93b8fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="m8 11 2 2 4-4"/></svg>
+        </div>
+        <h3 class="feature-title">Smart Search</h3>
+        <p class="feature-desc">BM25 ranking combined with AI query expansion finds exactly the right passages, even when you don't know the exact terms.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 4v16"/><path d="M2 12h20"/></svg>
+        </div>
+        <h3 class="feature-title">Flashcard Generator</h3>
+        <p class="feature-desc">Auto-generate study flashcards from your materials. Flip through key concepts and definitions to reinforce your memory.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#93b8fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h3 class="feature-title">Quiz Mode</h3>
+        <p class="feature-desc">Test yourself with AI-generated multiple choice questions tailored to your material. Track your scores and spot weak areas.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="feature-title">Community</h3>
+        <p class="feature-desc">Share your study guides with classmates and browse community-uploaded materials for every AP subject.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#93b8fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3 class="feature-title">Progress Tracking</h3>
+        <p class="feature-desc">Track your daily study streak, quiz scores, and review history. Stay motivated with clear progress indicators.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="how" id="how">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <p class="section-label" style="justify-content:center">How It Works</p>
+      <h2 class="section-title">Three steps to better grades</h2>
+      <p class="section-desc" style="margin:0 auto 0">Get started in under a minute. No account required.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal reveal-delay-1">
+        <div class="step-num">1</div>
+        <span class="step-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </span>
+        <h3 class="step-title">Upload</h3>
+        <p class="step-desc">Drag and drop your slides, PDFs, notes, or documents. We parse everything instantly.</p>
+      </div>
+      <div class="step reveal reveal-delay-2">
+        <div class="step-num">2</div>
+        <span class="step-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#93b8fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        <h3 class="step-title">Ask</h3>
+        <p class="step-desc">Type any question about your material. Our AI searches your notes and finds the answer.</p>
+      </div>
+      <div class="step reveal reveal-delay-3">
+        <div class="step-num">3</div>
+        <span class="step-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c4b5fd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </span>
+        <h3 class="step-title">Learn</h3>
+        <p class="step-desc">Study with flashcards, take quizzes, and track your progress. Ace your AP exams.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FORMATS ── -->
+<section class="formats" id="formats">
+  <div class="section-inner" style="text-align:center">
+    <div class="reveal">
+      <p class="section-label" style="justify-content:center">Supported Formats</p>
+      <h2 class="section-title">Works with your files</h2>
+      <p class="section-desc" style="margin:0 auto">Upload the formats you already use. No conversion needed.</p>
+    </div>
+    <div class="format-row reveal reveal-delay-1">
+      <div class="format-badge">
+        <span class="format-dot pptx"></span>
+        <div>
+          <div class="format-name">PowerPoint</div>
+          <div class="format-ext">.pptx</div>
+        </div>
+      </div>
+      <div class="format-badge">
+        <span class="format-dot pdf"></span>
+        <div>
+          <div class="format-name">PDF</div>
+          <div class="format-ext">.pdf</div>
+        </div>
+      </div>
+      <div class="format-badge">
+        <span class="format-dot docx"></span>
+        <div>
+          <div class="format-name">Word</div>
+          <div class="format-ext">.docx</div>
+        </div>
+      </div>
+      <div class="format-badge">
+        <span class="format-dot txt"></span>
+        <div>
+          <div class="format-name">Plain Text</div>
+          <div class="format-ext">.txt</div>
+        </div>
+      </div>
+      <div class="format-badge">
+        <span class="format-dot md"></span>
+        <div>
+          <div class="format-name">Markdown</div>
+          <div class="format-ext">.md</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <div class="cta-box reveal">
+    <h2 class="cta-title">Ready to study smarter?</h2>
+    <p class="cta-desc">Join thousands of AP students who are using StudySearch to prepare for their exams. It's free and takes seconds to get started.</p>
+    <a href="/app" class="cta-btn">
+      Start Studying
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <div class="footer-logo">Study<em>Search</em></div>
+  <p class="footer-sub">Built for AP students, powered by AI</p>
+  <a href="/app" class="footer-link">Open the App &rarr;</a>
+  <p class="footer-copy">&copy; 2026 StudySearch. Study smarter, not harder.</p>
+</footer>
+
+<!-- ── SCROLL REVEAL ── -->
+<script>
+(function(){
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        obs.unobserve(e.target);
+      }
+    });
+  },{threshold:0.12,rootMargin:'0px 0px -40px 0px'});
+
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+})();
+</script>
+
+</body>
+</html>
