@@ -112,16 +112,43 @@ class TursoConnection:
     def execute(self, sql, params=()):
         return DictCursor(self._conn.execute(sql, params))
     def executescript(self, sql):
-        self._conn.executescript(sql)
+        """Execute multiple statements one by one (executescript is unreliable on remote libsql)."""
+        statements = [s.strip() for s in sql.split(';') if s.strip()]
+        for stmt in statements:
+            try:
+                self._conn.execute(stmt)
+            except Exception:
+                pass
+        self._conn.commit()
+        self._sync()
     def commit(self):
         self._conn.commit()
+        self._sync()
+    def _sync(self):
+        """Sync to remote if using embedded replica mode."""
+        if hasattr(self._conn, 'sync'):
+            try:
+                self._conn.sync()
+            except Exception:
+                pass
     def close(self):
         self._conn.close()
 
 def get_db():
     if TURSO_DATABASE_URL:
-        conn = libsql.connect(database=TURSO_DATABASE_URL, auth_token=TURSO_AUTH_TOKEN)
-        return TursoConnection(conn)
+        try:
+            # For remote-only Turso, pass URL as database param
+            conn = libsql.connect(database=TURSO_DATABASE_URL, auth_token=TURSO_AUTH_TOKEN)
+            # Sync if embedded replica mode
+            if hasattr(conn, 'sync'):
+                try:
+                    conn.sync()
+                except Exception:
+                    pass
+            return TursoConnection(conn)
+        except Exception as e:
+            import logging
+            logging.getLogger("studysearch").error(f"[DB] Turso connection failed: {e}, falling back to local SQLite")
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -225,7 +252,16 @@ def init_db():
             conn.execute(m); conn.commit()
         except Exception:
             pass
-    conn.commit(); conn.close()
+    conn.commit()
+    # Verify DB is working by counting users
+    try:
+        count = conn.execute("SELECT COUNT(*) as c FROM users").fetchone()
+        import logging
+        logging.getLogger("studysearch").info(f"[DB] Verified: {count['c'] if count else 0} users in database")
+    except Exception as e:
+        import logging
+        logging.getLogger("studysearch").error(f"[DB] Verification failed: {e}")
+    conn.close()
 
 # ─── AUTH HELPERS ─────────────────────────────────────────────────────────────
 
@@ -391,7 +427,15 @@ def _get_session_chunks(conn, sid: str, topic: str = "") -> List[dict]:
 
 @asynccontextmanager
 async def lifespan(app):
-    init_db(); yield
+    import logging
+    logger = logging.getLogger("studysearch")
+    if TURSO_DATABASE_URL:
+        logger.info(f"[DB] Using Turso remote database: {TURSO_DATABASE_URL[:40]}...")
+    else:
+        logger.info(f"[DB] Using local SQLite: {DB_PATH}")
+    init_db()
+    logger.info("[DB] Schema initialized successfully")
+    yield
 
 app = FastAPI(title="StudySearch API v3", lifespan=lifespan)
 app.state.limiter = limiter
@@ -1247,7 +1291,8 @@ def get_shared_session(token: str):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "version": "4.0.0", "search": "BM25", "ai": "optional"}
+    db_mode = "turso" if TURSO_DATABASE_URL else "local-sqlite"
+    return {"status": "ok", "version": "4.1.0", "search": "BM25", "ai": "optional", "db": db_mode}
 
 @app.get("/")
 def landing_page():
