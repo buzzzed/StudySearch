@@ -5,240 +5,222 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>StudySearch — AI Study Tool for AP Students</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-  --bg:#050508;
-  --surface:#0b0b10;
-  --surface2:#111118;
-  --surface3:#1a1a24;
-  --border:rgba(255,255,255,0.06);
-  --border-hard:rgba(255,255,255,0.12);
-  --text:#f0ede6;
-  --text2:#8a8680;
-  --text3:#4a4740;
-  --neon:#d4ff00;
-  --neon-dim:rgba(212,255,0,0.06);
-  --neon-mid:rgba(212,255,0,0.15);
-  --neon-glow:rgba(212,255,0,0.25);
-  --white:#fff;
-  --display:'DM Serif Display',Georgia,serif;
-  --body:'Space Grotesk',system-ui,sans-serif;
-  --mono:'Space Mono','Courier New',monospace;
+  --bg:#f5f5f7;
+  --surface:#ffffff;
+  --surface2:#f2f2f7;
+  --surface3:#e8e8ed;
+  --border:rgba(0,0,0,0.06);
+  --border2:rgba(0,0,0,0.1);
+  --text:#1d1d1f;
+  --text2:#6e6e73;
+  --text3:#aeaeb2;
+  --accent:#007aff;
+  --accent-dim:rgba(0,122,255,0.06);
+  --accent-mid:rgba(0,122,255,0.12);
+  --accent-glow:rgba(0,122,255,0.2);
+  --white:#ffffff;
+  --sans:-apple-system,BlinkMacSystemFont,'Inter','SF Pro Display','Helvetica Neue',sans-serif;
+  --mono:'SF Mono','Menlo','Courier New',monospace;
+  --r:12px;
+  --r-sm:8px;
+  --r-lg:16px;
+  --r-xl:20px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.06);
+  --shadow:0 4px 12px rgba(0,0,0,0.05),0 1px 3px rgba(0,0,0,0.08);
+  --shadow-lg:0 12px 40px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.05);
 }
 
 html{scroll-behavior:smooth}
-body{font-family:var(--body);background:var(--bg);color:var(--text);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-::selection{background:var(--neon);color:var(--bg)}
-
-/* ── GRID LINES (decorative) ── */
-.grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0}
-.grid-bg .v{position:absolute;top:0;bottom:0;width:1px;background:var(--border)}
-.grid-bg .v:nth-child(1){left:4%}
-.grid-bg .v:nth-child(2){left:33%}
-.grid-bg .v:nth-child(3){left:66%}
-.grid-bg .v:nth-child(4){right:4%}
+::selection{background:var(--accent);color:var(--white)}
 
 /* ── NAV ── */
 .nav{
   position:fixed;top:0;left:0;right:0;z-index:100;
-  padding:0 4%;height:56px;
+  padding:0 max(24px,4%);height:52px;
   display:flex;align-items:center;justify-content:space-between;
-  background:rgba(5,5,8,0.85);backdrop-filter:blur(24px);
+  background:rgba(255,255,255,0.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:1px solid var(--border);
 }
-.nav-logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-.02em;text-transform:uppercase}
-.nav-logo span{color:var(--neon)}
-.nav-right{display:flex;align-items:center;gap:28px}
-.nav-link{font-family:var(--mono);font-size:11px;color:var(--text2);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;transition:color .2s}
-.nav-link:hover{color:var(--neon)}
+.nav-logo{font-size:15px;font-weight:600;color:var(--text);text-decoration:none;letter-spacing:-.02em}
+.nav-logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:24px}
+.nav-link{font-size:13px;color:var(--text2);text-decoration:none;font-weight:500;transition:color .2s}
+.nav-link:hover{color:var(--accent)}
 .nav-cta{
-  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  background:var(--neon);color:var(--bg);border:none;padding:10px 24px;
-  cursor:pointer;text-decoration:none;transition:all .2s;
+  font-size:13px;font-weight:600;
+  background:var(--accent);color:var(--white);border:none;padding:8px 18px;
+  border-radius:999px;cursor:pointer;text-decoration:none;transition:all .2s;
 }
-.nav-cta:hover{box-shadow:0 0 24px var(--neon-glow),0 0 0 1px var(--neon)}
+.nav-cta:hover{background:#0066d6;transform:scale(1.02)}
 
 /* ── HERO ── */
 .hero{
-  min-height:100vh;display:grid;grid-template-columns:4% 1fr 1fr 4%;
-  grid-template-rows:1fr auto;padding-top:56px;position:relative;z-index:1;
-}
-.hero-left{
-  grid-column:2/3;display:flex;flex-direction:column;justify-content:center;
-  padding:80px 40px 80px 0;border-right:1px solid var(--border);
-}
-.hero-right{
-  grid-column:3/4;display:flex;flex-direction:column;justify-content:end;
-  padding:80px 0 80px 48px;position:relative;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:120px max(24px,4%) 80px;text-align:center;position:relative;
 }
 .hero-tag{
-  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--neon);margin-bottom:32px;display:flex;align-items:center;gap:12px;
+  font-size:13px;font-weight:600;letter-spacing:.02em;
+  color:var(--accent);margin-bottom:20px;
+  background:var(--accent-dim);padding:6px 16px;border-radius:999px;
+  border:1px solid var(--accent-glow);
 }
-.hero-tag::before{content:'';width:32px;height:1px;background:var(--neon)}
 .hero-title{
-  font-family:var(--display);font-size:clamp(56px,7.5vw,120px);font-weight:400;
-  line-height:.92;letter-spacing:-.03em;margin-bottom:32px;
+  font-size:clamp(44px,7vw,80px);font-weight:700;
+  line-height:1.05;letter-spacing:-.035em;margin-bottom:20px;
+  background:linear-gradient(135deg,var(--text) 0%,var(--text2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
 }
-.hero-title em{font-style:italic;color:var(--neon)}
-.hero-desc{font-size:17px;color:var(--text2);max-width:420px;line-height:1.75;font-weight:300;margin-bottom:48px}
-.hero-actions{display:flex;gap:16px;align-items:center}
+.hero-title em{font-style:normal;background:linear-gradient(135deg,var(--accent) 0%,#5856d6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-desc{font-size:18px;color:var(--text2);max-width:560px;line-height:1.65;font-weight:400;margin:0 auto 40px}
+.hero-actions{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
 .hero-btn{
-  font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
-  background:var(--neon);color:var(--bg);border:none;padding:16px 36px;
-  cursor:pointer;text-decoration:none;transition:all .25s;display:inline-flex;align-items:center;gap:10px;
+  font-size:15px;font-weight:600;
+  background:var(--accent);color:var(--white);border:none;padding:14px 32px;
+  border-radius:999px;cursor:pointer;text-decoration:none;transition:all .25s;display:inline-flex;align-items:center;gap:8px;
 }
-.hero-btn:hover{box-shadow:0 0 40px var(--neon-glow),0 4px 20px rgba(0,0,0,.4);transform:translateY(-2px)}
+.hero-btn:hover{background:#0066d6;transform:translateY(-1px);box-shadow:0 8px 24px var(--accent-glow)}
 .hero-btn-ghost{
-  font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.04em;text-transform:uppercase;
-  color:var(--text2);text-decoration:none;border-bottom:1px solid var(--text3);padding-bottom:2px;transition:all .2s;
+  font-size:15px;font-weight:500;
+  color:var(--accent);text-decoration:none;padding:14px 24px;border-radius:999px;
+  border:1px solid var(--accent-glow);transition:all .2s;
 }
-.hero-btn-ghost:hover{color:var(--neon);border-color:var(--neon)}
+.hero-btn-ghost:hover{background:var(--accent-dim);border-color:var(--accent)}
 
-.hero-stat-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);
-  border:1px solid var(--border);margin-top:auto;
+.hero-stats{
+  display:flex;gap:0;margin-top:64px;
+  background:var(--surface);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-lg);overflow:hidden;border:1px solid var(--border);
 }
-.hero-stat{background:var(--bg);padding:28px 24px}
-.hero-stat-val{font-family:var(--display);font-size:36px;color:var(--text);line-height:1}
-.hero-stat-val span{color:var(--neon)}
-.hero-stat-label{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:8px}
+.hero-stat{padding:24px 32px;text-align:center;position:relative}
+.hero-stat+.hero-stat::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:1px;background:var(--border2)}
+.hero-stat-val{font-size:28px;font-weight:700;color:var(--text);line-height:1.2}
+.hero-stat-val span{color:var(--accent)}
+.hero-stat-label{font-size:11px;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;margin-top:4px;font-weight:500}
 
-.hero-bottom{grid-column:2/4;border-top:1px solid var(--border);padding:20px 0;display:flex;align-items:center;gap:32px}
-.hero-bottom-tag{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
-.hero-formats{display:flex;gap:8px}
-.hero-fmt{font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 14px;border:1px solid var(--border-hard);color:var(--text2);letter-spacing:.04em}
+.hero-formats-bar{margin-top:40px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
+.hero-formats-label{font-size:12px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.hero-formats{display:flex;gap:6px}
+.hero-fmt{font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--border2);color:var(--text2)}
 
 /* ── FEATURES ── */
-.features{padding:0 4%;position:relative;z-index:1;border-top:1px solid var(--border)}
-.features-header{
-  display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);
-}
-.features-header-left{padding:64px 40px 64px 0;border-right:1px solid var(--border)}
-.features-header-right{padding:64px 0 64px 48px;display:flex;align-items:end}
-.section-num{font-family:var(--mono);font-size:10px;color:var(--neon);letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px}
-.section-title{font-family:var(--display);font-size:clamp(32px,4vw,52px);line-height:1.05;letter-spacing:-.025em}
-.section-desc{font-size:16px;color:var(--text2);line-height:1.75;font-weight:300;max-width:400px}
+.features{padding:100px max(24px,4%);position:relative}
+.features-header{text-align:center;margin-bottom:56px}
+.section-tag{font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.02em;margin-bottom:12px;text-transform:uppercase}
+.section-title{font-size:clamp(28px,4vw,44px);font-weight:700;line-height:1.15;letter-spacing:-.03em;margin-bottom:12px}
+.section-desc{font-size:17px;color:var(--text2);line-height:1.6;max-width:520px;margin:0 auto}
 
 .features-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1080px;margin:0 auto;
 }
-.feat{background:var(--bg);padding:40px 32px;transition:background .3s;position:relative}
-.feat:hover{background:var(--surface)}
-.feat-idx{font-family:var(--mono);font-size:48px;font-weight:700;color:var(--surface3);line-height:1;margin-bottom:20px;letter-spacing:-.04em}
-.feat:hover .feat-idx{color:var(--neon-dim)}
-.feat-title{font-family:var(--display);font-size:22px;margin-bottom:10px;letter-spacing:-.01em}
-.feat-desc{font-size:14px;color:var(--text2);line-height:1.7;font-weight:300}
-.feat-dot{position:absolute;top:20px;right:24px;width:6px;height:6px;background:var(--text3);transition:background .3s}
-.feat:hover .feat-dot{background:var(--neon)}
+.feat{
+  background:var(--surface);padding:32px 28px;border-radius:var(--r-lg);
+  border:1px solid var(--border);transition:all .3s;position:relative;
+}
+.feat:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--border2)}
+.feat-icon{width:40px;height:40px;border-radius:var(--r-sm);background:var(--accent-dim);display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:18px}
+.feat-title{font-size:17px;font-weight:600;margin-bottom:8px;letter-spacing:-.01em}
+.feat-desc{font-size:14px;color:var(--text2);line-height:1.6}
 
 /* ── HOW IT WORKS ── */
-.how{padding:0 4%;position:relative;z-index:1;border-top:1px solid var(--border)}
-.how-header{padding:64px 0;border-bottom:1px solid var(--border)}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
-.step{background:var(--bg);padding:48px 32px;position:relative;counter-increment:step}
-.step::before{
-  content:counter(step,decimal-leading-zero);font-family:var(--mono);font-size:64px;font-weight:700;
-  color:var(--surface2);line-height:1;display:block;margin-bottom:24px;letter-spacing:-.04em;
+.how{padding:100px max(24px,4%);background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.how-header{text-align:center;margin-bottom:56px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:960px;margin:0 auto}
+.step{text-align:center;padding:32px 24px;position:relative}
+.step-num{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--accent);color:var(--white);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;margin-bottom:20px;
 }
-.step-title{font-family:var(--display);font-size:28px;margin-bottom:12px}
-.step-desc{font-size:14px;color:var(--text2);line-height:1.75;font-weight:300}
-.step-accent{position:absolute;bottom:0;left:0;right:0;height:2px;background:transparent;transition:background .3s}
-.step:hover .step-accent{background:var(--neon)}
+.step-title{font-size:18px;font-weight:600;margin-bottom:8px}
+.step-desc{font-size:14px;color:var(--text2);line-height:1.65}
+.step-connector{display:none}
 
 /* ── CTA ── */
 .cta{
-  padding:0 4%;position:relative;z-index:1;border-top:1px solid var(--border);
+  padding:100px max(24px,4%);text-align:center;
 }
-.cta-inner{
-  display:grid;grid-template-columns:1fr 1fr;min-height:400px;
+.cta-card{
+  max-width:720px;margin:0 auto;padding:64px 48px;
+  background:var(--surface);border-radius:var(--r-xl);
+  box-shadow:var(--shadow-lg);border:1px solid var(--border);
 }
-.cta-left{
-  padding:80px 40px 80px 0;border-right:1px solid var(--border);
-  display:flex;flex-direction:column;justify-content:center;
-}
-.cta-right{
-  padding:80px 0 80px 48px;display:flex;align-items:center;
-}
-.cta-title{font-family:var(--display);font-size:clamp(36px,5vw,56px);line-height:1.05;letter-spacing:-.025em;margin-bottom:20px}
-.cta-title em{font-style:italic;color:var(--neon)}
-.cta-desc{font-size:16px;color:var(--text2);line-height:1.75;font-weight:300;margin-bottom:40px;max-width:360px}
+.cta-title{font-size:clamp(28px,4vw,40px);font-weight:700;line-height:1.15;letter-spacing:-.03em;margin-bottom:12px}
+.cta-title em{font-style:normal;color:var(--accent)}
+.cta-desc{font-size:17px;color:var(--text2);line-height:1.6;margin-bottom:32px;max-width:420px;margin-left:auto;margin-right:auto}
+.cta-stats{display:flex;justify-content:center;gap:40px;margin-top:32px}
+.cta-stat{text-align:center}
+.cta-stat-val{font-size:22px;font-weight:700;color:var(--accent)}
+.cta-stat-label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.03em;margin-top:2px}
 
 /* ── FOOTER ── */
 .footer{
-  padding:32px 4%;border-top:1px solid var(--border);position:relative;z-index:1;
+  padding:24px max(24px,4%);border-top:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;
 }
-.footer-left{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
-.footer-left span{color:var(--neon)}
-.footer-right{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em}
+.footer-left{font-size:13px;color:var(--text3);font-weight:500}
+.footer-left span{color:var(--accent)}
+.footer-right{font-size:12px;color:var(--text3)}
 
 /* ── REVEAL ── */
-.rv{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1)}
+.rv{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
 .rv.vis{opacity:1;transform:none}
 .rv-d1{transition-delay:.1s}.rv-d2{transition-delay:.2s}.rv-d3{transition-delay:.3s}
 
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
-  .hero{grid-template-columns:5% 1fr 5%;grid-template-rows:auto auto auto}
-  .hero-left{grid-column:2/3;border-right:none;padding:60px 0}
-  .hero-right{grid-column:2/3;padding:0 0 40px}
-  .hero-bottom{grid-column:2/3}
-  .features-header{grid-template-columns:1fr}
-  .features-header-left{border-right:none;padding:48px 0}
-  .features-header-right{padding:0 0 48px}
-  .features-grid{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:1fr 1fr}
   .steps{grid-template-columns:1fr}
-  .cta-inner{grid-template-columns:1fr}
-  .cta-left{border-right:none;padding:60px 0}
-  .cta-right{padding:0 0 60px}
+  .hero-stats{flex-wrap:wrap}
+  .hero-stat{flex:1;min-width:140px}
 }
 @media(max-width:600px){
-  .nav{padding:0 5%}
+  .nav{padding:0 16px}
   .nav-link{display:none}
-  .hero-stat-grid{grid-template-columns:1fr}
-  .hero-formats{flex-wrap:wrap}
-  .footer{flex-direction:column;gap:12px;text-align:center;padding:24px 5%}
+  .features-grid{grid-template-columns:1fr}
+  .hero-stats{flex-direction:column;border-radius:var(--r)}
+  .hero-stat+.hero-stat::before{top:0;bottom:auto;left:20%;right:20%;width:auto;height:1px}
+  .cta-card{padding:40px 24px}
+  .cta-stats{flex-direction:column;gap:16px}
+  .footer{flex-direction:column;gap:8px;text-align:center}
 }
 </style>
 </head>
 <body>
 
-<div class="grid-bg"><div class="v"></div><div class="v"></div><div class="v"></div><div class="v"></div></div>
-
 <nav class="nav">
-  <a href="#" class="nav-logo">STUDY<span>SEARCH</span></a>
+  <a href="#" class="nav-logo">Study<span>Search</span></a>
   <div class="nav-right">
     <a href="#features" class="nav-link">Features</a>
-    <a href="#how" class="nav-link">Process</a>
+    <a href="#how" class="nav-link">How it Works</a>
     <a href="/app" class="nav-cta">Launch App</a>
   </div>
 </nav>
 
 <section class="hero">
-  <div class="hero-left">
-    <div class="hero-tag">For AP Students</div>
-    <h1 class="hero-title">Study<em>Search</em></h1>
-    <p class="hero-desc">Upload your slides. Ask questions. Get answers sourced directly from your own notes. AI that reads your material so you don't have to dig.</p>
-    <div class="hero-actions">
-      <a href="/app" class="hero-btn">Get Started <span>&rarr;</span></a>
-      <a href="#features" class="hero-btn-ghost">See features</a>
-    </div>
+  <div class="hero-tag">Built for AP Students</div>
+  <h1 class="hero-title">Study smarter with <em>StudySearch</em></h1>
+  <p class="hero-desc">Upload your slides and notes. Ask questions in plain English. Get instant answers sourced directly from your own material.</p>
+  <div class="hero-actions">
+    <a href="/app" class="hero-btn">Get Started <span>&rarr;</span></a>
+    <a href="#features" class="hero-btn-ghost">Learn more</a>
   </div>
-  <div class="hero-right">
-    <div class="hero-stat-grid">
-      <div class="hero-stat"><div class="hero-stat-val">39<span>+</span></div><div class="hero-stat-label">AP Classes</div></div>
-      <div class="hero-stat"><div class="hero-stat-val"><span>&lt;</span>2s</div><div class="hero-stat-label">Search Speed</div></div>
-      <div class="hero-stat"><div class="hero-stat-val">5</div><div class="hero-stat-label">File Formats</div></div>
-      <div class="hero-stat"><div class="hero-stat-val"><span>AI</span></div><div class="hero-stat-label">Powered by Claude</div></div>
-    </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="hero-stat-val">39<span>+</span></div><div class="hero-stat-label">AP Classes</div></div>
+    <div class="hero-stat"><div class="hero-stat-val"><span>&lt;</span>2s</div><div class="hero-stat-label">Search Speed</div></div>
+    <div class="hero-stat"><div class="hero-stat-val">5</div><div class="hero-stat-label">File Formats</div></div>
+    <div class="hero-stat"><div class="hero-stat-val"><span>AI</span></div><div class="hero-stat-label">Powered</div></div>
   </div>
-  <div class="hero-bottom">
-    <div class="hero-bottom-tag">Supports</div>
+  <div class="hero-formats-bar">
+    <span class="hero-formats-label">Supports</span>
     <div class="hero-formats">
       <span class="hero-fmt">PPTX</span>
       <span class="hero-fmt">PDF</span>
@@ -250,55 +232,47 @@ body{font-family:var(--body);background:var(--bg);color:var(--text);font-size:16
 </section>
 
 <section class="features" id="features">
-  <div class="features-header">
-    <div class="features-header-left rv">
-      <div class="section-num">01 / Features</div>
-      <h2 class="section-title">Tools that actually help you study</h2>
-    </div>
-    <div class="features-header-right rv rv-d1">
-      <p class="section-desc">Not another generic AI wrapper. Every feature is built around how students actually prepare for AP exams.</p>
-    </div>
+  <div class="features-header rv">
+    <div class="section-tag">Features</div>
+    <h2 class="section-title">Tools that actually help you study</h2>
+    <p class="section-desc">Every feature is built around how students actually prepare for AP exams. Not another generic AI wrapper.</p>
   </div>
   <div class="features-grid">
-    <div class="feat rv"><div class="feat-dot"></div><div class="feat-idx">01</div><div class="feat-title">AI Answers</div><div class="feat-desc">Ask a question, get a direct answer pulled from your own uploaded slides and notes. No hallucinations from random internet data.</div></div>
-    <div class="feat rv rv-d1"><div class="feat-dot"></div><div class="feat-idx">02</div><div class="feat-title">Smart Search</div><div class="feat-desc">BM25 ranking plus AI query expansion. Finds the right passage even when you don't remember the exact terminology.</div></div>
-    <div class="feat rv rv-d2"><div class="feat-dot"></div><div class="feat-idx">03</div><div class="feat-title">Flashcards</div><div class="feat-desc">Auto-generate flashcards from your material. Flip through concepts. No manual card creation required.</div></div>
-    <div class="feat rv"><div class="feat-dot"></div><div class="feat-idx">04</div><div class="feat-title">Quiz Mode</div><div class="feat-desc">AI-generated multiple choice questions from your material. Instant grading. See explanations for wrong answers.</div></div>
-    <div class="feat rv rv-d1"><div class="feat-dot"></div><div class="feat-idx">05</div><div class="feat-title">Community</div><div class="feat-desc">Share study guides by AP class and unit. Browse what other students have posted. Upvote the best resources.</div></div>
-    <div class="feat rv rv-d2"><div class="feat-dot"></div><div class="feat-idx">06</div><div class="feat-title">Progress</div><div class="feat-desc">Track your study streak, quiz scores, and activity. Know exactly where you stand before exam day.</div></div>
+    <div class="feat rv"><div class="feat-icon">&#x1F4A1;</div><div class="feat-title">AI Answers</div><div class="feat-desc">Ask a question, get a direct answer pulled from your own uploaded slides and notes.</div></div>
+    <div class="feat rv rv-d1"><div class="feat-icon">&#x1F50D;</div><div class="feat-title">Smart Search</div><div class="feat-desc">BM25 ranking plus AI query expansion finds the right passage even without exact terms.</div></div>
+    <div class="feat rv rv-d2"><div class="feat-icon">&#x1F4C7;</div><div class="feat-title">Flashcards</div><div class="feat-desc">Auto-generate flashcards from your material. Flip through concepts without manual creation.</div></div>
+    <div class="feat rv"><div class="feat-icon">&#x2705;</div><div class="feat-title">Quiz Mode</div><div class="feat-desc">AI-generated multiple choice questions with instant grading and explanations.</div></div>
+    <div class="feat rv rv-d1"><div class="feat-icon">&#x1F465;</div><div class="feat-title">Community</div><div class="feat-desc">Share study guides by AP class and unit. Browse and upvote the best resources.</div></div>
+    <div class="feat rv rv-d2"><div class="feat-icon">&#x1F4C8;</div><div class="feat-title">Progress</div><div class="feat-desc">Track your study streak, quiz scores, and activity before exam day.</div></div>
   </div>
 </section>
 
 <section class="how" id="how">
   <div class="how-header rv">
-    <div class="section-num">02 / Process</div>
-    <h2 class="section-title">Upload. Ask. Learn.</h2>
+    <div class="section-tag">How it Works</div>
+    <h2 class="section-title">Three steps to better studying</h2>
   </div>
-  <div class="steps" style="counter-reset:step">
-    <div class="step rv"><div class="step-title">Upload your material</div><div class="step-desc">Drag in your PowerPoints, PDFs, Word docs, or plain text. Content is parsed and indexed instantly. Everything stays in your session.</div><div class="step-accent"></div></div>
-    <div class="step rv rv-d1"><div class="step-title">Ask anything</div><div class="step-desc">Type a question in natural language. The search engine finds relevant passages, then AI synthesizes a direct answer from your notes.</div><div class="step-accent"></div></div>
-    <div class="step rv rv-d2"><div class="step-title">Study and test</div><div class="step-desc">Generate flashcards, take quizzes, track your streak. Every tool works from the same material you uploaded. One source of truth.</div><div class="step-accent"></div></div>
+  <div class="steps">
+    <div class="step rv"><div class="step-num">1</div><div class="step-title">Upload your material</div><div class="step-desc">Drag in your PowerPoints, PDFs, Word docs, or plain text. Content is parsed and indexed instantly.</div></div>
+    <div class="step rv rv-d1"><div class="step-num">2</div><div class="step-title">Ask anything</div><div class="step-desc">Type a question in natural language. The search engine finds relevant passages and AI synthesizes an answer.</div></div>
+    <div class="step rv rv-d2"><div class="step-num">3</div><div class="step-title">Study and test</div><div class="step-desc">Generate flashcards, take quizzes, track your streak. Every tool works from the same material.</div></div>
   </div>
 </section>
 
 <section class="cta">
-  <div class="cta-inner">
-    <div class="cta-left rv">
-      <h2 class="cta-title">Ready to <em>study</em>?</h2>
-      <p class="cta-desc">Free to use. No credit card. Upload your first document and start asking questions in under 30 seconds.</p>
-      <a href="/app" class="hero-btn">Launch StudySearch <span>&rarr;</span></a>
-    </div>
-    <div class="cta-right rv rv-d1">
-      <div class="hero-stat-grid" style="width:100%">
-        <div class="hero-stat"><div class="hero-stat-val"><span>Free</span></div><div class="hero-stat-label">No cost</div></div>
-        <div class="hero-stat"><div class="hero-stat-val">30<span>s</span></div><div class="hero-stat-label">To first answer</div></div>
-      </div>
+  <div class="cta-card rv">
+    <h2 class="cta-title">Ready to <em>study</em>?</h2>
+    <p class="cta-desc">Free to use. No credit card. Upload your first document and start asking questions in under 30 seconds.</p>
+    <a href="/app" class="hero-btn">Launch StudySearch <span>&rarr;</span></a>
+    <div class="cta-stats">
+      <div class="cta-stat"><div class="cta-stat-val">Free</div><div class="cta-stat-label">No cost</div></div>
+      <div class="cta-stat"><div class="cta-stat-val">30s</div><div class="cta-stat-label">To first answer</div></div>
     </div>
   </div>
 </section>
 
 <footer class="footer">
-  <div class="footer-left">STUDY<span>SEARCH</span> / Built for AP Students</div>
+  <div class="footer-left">Study<span>Search</span> &mdash; Built for AP Students</div>
   <div class="footer-right">&copy; 2026</div>
 </footer>
 
